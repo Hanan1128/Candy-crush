@@ -260,7 +260,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
             repeat: Infinity,
             ease: 'easeInOut'
           }}
-          className="w-10 h-10 sm:w-12 sm:h-12 relative flex items-center justify-center"
+          className="w-full h-full relative flex items-center justify-center"
         >
           <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.35)] overflow-visible">
             <defs>
@@ -432,7 +432,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   return (
     <div 
       id="candy-board"
-      className="grid grid-cols-8 gap-0.5 sm:gap-1 p-1 sm:p-1.5 bg-slate-900/95 border-2 sm:border-4 border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-[0_15px_30px_rgba(0,0,0,0.6)] w-full h-full max-w-[min(100%,480px)] max-h-[min(100%,480px)] aspect-square select-none touch-none relative"
+      className="grid grid-cols-8 gap-0.5 sm:gap-1 p-1 sm:p-1.5 bg-slate-900/95 border-2 sm:border-4 border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-[0_15px_30px_rgba(0,0,0,0.6)] w-full h-full max-w-[min(100%,560px)] max-h-[min(100%,560px)] aspect-square select-none touch-none relative"
     >
       
       {board.map((cell, index) => {

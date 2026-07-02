@@ -11,7 +11,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'moves',
     targetScore: 1000,
     starRatings: [800, 1500, 2500],
-    limitValue: 25,
+    limitValue: 20,
     objectives: [
       { type: 'score', target: 1000, current: 0 }
     ],
@@ -25,7 +25,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'moves',
     targetScore: 1200,
     starRatings: [1000, 2000, 3500],
-    limitValue: 20,
+    limitValue: 18,
     objectives: [
       { type: 'jelly', target: 8, current: 0 }
     ],
@@ -45,7 +45,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'moves',
     targetScore: 1500,
     starRatings: [1200, 2500, 4000],
-    limitValue: 28,
+    limitValue: 18,
     objectives: [
       { type: 'color', target: 20, current: 0, colorNeeded: 'red' },
       { type: 'color', target: 20, current: 0, colorNeeded: 'blue' }
@@ -60,7 +60,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'moves',
     targetScore: 1800,
     starRatings: [1500, 3000, 5000],
-    limitValue: 22,
+    limitValue: 17,
     objectives: [
       { type: 'ice', target: 6, current: 0 }
     ],
@@ -79,7 +79,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'moves',
     targetScore: 2000,
     starRatings: [1800, 3500, 6000],
-    limitValue: 30,
+    limitValue: 17,
     objectives: [
       { type: 'ingredient', target: 2, current: 0, ingredientType: 'cherry' }
     ],
@@ -93,10 +93,10 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     worldName: 'Chocolate Valley',
     themeColor: 'from-amber-600 to-orange-500',
     backgroundGradient: 'bg-gradient-to-b from-slate-950 via-amber-950 to-orange-950',
-    mode: 'timed',
+    mode: 'moves',
     targetScore: 2500,
     starRatings: [2000, 4000, 7000],
-    limitValue: 90, // 90 seconds
+    limitValue: 16,
     objectives: [
       { type: 'chocolate', target: 2, current: 0 }
     ],
@@ -113,7 +113,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'moves',
     targetScore: 2200,
     starRatings: [2000, 4500, 7500],
-    limitValue: 24,
+    limitValue: 16,
     objectives: [
       { type: 'color', target: 25, current: 0, colorNeeded: 'yellow' }
     ],
@@ -132,7 +132,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'challenge',
     targetScore: 3000,
     starRatings: [2500, 5000, 8500],
-    limitValue: 20,
+    limitValue: 15,
     objectives: [
       { type: 'jelly', target: 12, current: 0 }
     ],
@@ -154,7 +154,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'moves',
     targetScore: 3200,
     starRatings: [3000, 5500, 9000],
-    limitValue: 26,
+    limitValue: 15,
     objectives: [
       { type: 'ingredient', target: 2, current: 0, ingredientType: 'hazelnut' },
       { type: 'ice', target: 4, current: 0 }
@@ -174,7 +174,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'challenge',
     targetScore: 4000,
     starRatings: [3500, 7000, 11000],
-    limitValue: 22,
+    limitValue: 14,
     objectives: [
       { type: 'jelly', target: 8, current: 0 },
       { type: 'color', target: 30, current: 0, colorNeeded: 'purple' }
@@ -196,10 +196,10 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     worldName: 'Ice Glaciers',
     themeColor: 'from-cyan-500 to-indigo-600',
     backgroundGradient: 'bg-gradient-to-b from-slate-950 via-cyan-950 to-indigo-950',
-    mode: 'timed',
+    mode: 'moves',
     targetScore: 4500,
     starRatings: [4000, 7500, 12000],
-    limitValue: 60, // 60 seconds
+    limitValue: 15,
     objectives: [
       { type: 'ice', target: 12, current: 0 }
     ],
@@ -221,7 +221,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'moves',
     targetScore: 3500,
     starRatings: [3000, 6000, 10000],
-    limitValue: 24,
+    limitValue: 15,
     objectives: [
       { type: 'jelly', target: 16, current: 0 }
     ],
@@ -245,7 +245,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'challenge',
     targetScore: 5000,
     starRatings: [4500, 8000, 14000],
-    limitValue: 20,
+    limitValue: 14,
     objectives: [
       { type: 'chocolate', target: 2, current: 0 }
     ],
@@ -261,10 +261,10 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     worldName: 'Ice Glaciers',
     themeColor: 'from-cyan-500 to-indigo-600',
     backgroundGradient: 'bg-gradient-to-b from-slate-950 via-cyan-950 to-indigo-950',
-    mode: 'timed',
+    mode: 'moves',
     targetScore: 5500,
     starRatings: [5000, 9000, 15000],
-    limitValue: 45, // 45 seconds
+    limitValue: 14,
     objectives: [
       { type: 'color', target: 35, current: 0, colorNeeded: 'green' }
     ],
@@ -283,7 +283,7 @@ export const LEVEL_PRESETS: LevelConfig[] = [
     mode: 'challenge',
     targetScore: 6000,
     starRatings: [5000, 10000, 18000],
-    limitValue: 25,
+    limitValue: 16,
     objectives: [
       { type: 'jelly', target: 8, current: 0 },
       { type: 'ice', target: 8, current: 0 },

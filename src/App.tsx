@@ -44,7 +44,7 @@ import {
   startBgmLoop,
   stopBgmLoop
 } from './audio';
-import { HelpCircle, RefreshCw, Trophy, Info, Sparkles, X, RotateCcw, Volume2, Coins } from 'lucide-react';
+import { HelpCircle, RefreshCw, Trophy, Info, Sparkles, X, RotateCcw, Volume2, Coins, Heart } from 'lucide-react';
 
 interface Particle {
   id: string;
@@ -109,6 +109,15 @@ const calculateStars = (score: number, ratings: [number, number, number]): numbe
 export default function App() {
   // Navigation
   const [currentView, setCurrentView] = useState<ActiveView>('home');
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2800); // 2.8 seconds splash screen duration
+    return () => clearTimeout(timer);
+  }, []);
+
   const [progress, setProgress] = useState<UserProgress>(DEFAULT_PROGRESS);
   const [achievements, setAchievements] = useState<Achievement[]>(INITIAL_ACHIEVEMENTS);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(MOCK_LEADERBOARD);
@@ -134,7 +143,6 @@ export default function App() {
   const [showLevelClear, setShowLevelClear] = useState<boolean>(false);
   const [hasClearedCurrentSession, setHasClearedCurrentSession] = useState<boolean>(false);
   const [hasRewardedSession, setHasRewardedSession] = useState<boolean>(false);
-  const [showEarlyClearPopup, setShowEarlyClearPopup] = useState<boolean>(false);
   const [showRules, setShowRules] = useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
@@ -194,7 +202,7 @@ export default function App() {
   // Timed Level Countdown ticks
   useEffect(() => {
     let timerId: any = null;
-    if (currentView === 'game' && selectedLevel?.mode === 'timed' && !isPaused && !showGameOver && !showLevelClear && !showEarlyClearPopup) {
+    if (currentView === 'game' && selectedLevel?.mode === 'timed' && !isPaused && !showGameOver && !showLevelClear) {
       timerId = setInterval(() => {
         setGameStats((prev) => {
           if (prev.timeLeft <= 1) {
@@ -219,7 +227,8 @@ export default function App() {
                 
                 const nextUnlocked = Math.max(progress.levelsUnlocked, selectedLevel.levelNumber + 1);
 
-                const coinsReward = hasRewardedSession ? 0 : 100;
+                const isAlreadyCompleted = progress.levelStars[selectedLevel.levelNumber] !== undefined;
+                const coinsReward = (hasRewardedSession || isAlreadyCompleted) ? 0 : 100;
                 setHasRewardedSession(true);
 
                 handleUpdateProgress({
@@ -245,9 +254,9 @@ export default function App() {
     return () => {
       if (timerId) clearInterval(timerId);
     };
-  }, [currentView, selectedLevel, isPaused, showGameOver, showLevelClear, showEarlyClearPopup, progress, hasClearedCurrentSession, hasRewardedSession]);
+  }, [currentView, selectedLevel, isPaused, showGameOver, showLevelClear, progress, hasClearedCurrentSession, hasRewardedSession]);
 
-  // Continuous check for early level completion
+  // Continuous check for level completion
   useEffect(() => {
     if (!selectedLevel || currentView !== 'game' || hasClearedCurrentSession) return;
 
@@ -263,7 +272,7 @@ export default function App() {
     if (canComplete) {
       setHasClearedCurrentSession(true);
       setIsPaused(true);
-      setShowEarlyClearPopup(true);
+      setShowLevelClear(true);
       
       // Award progress success immediately
       playLevelUpSound();
@@ -279,7 +288,8 @@ export default function App() {
       };
       const nextUnlocked = Math.max(progress.levelsUnlocked, selectedLevel.levelNumber + 1);
 
-      const coinsReward = hasRewardedSession ? 0 : 100;
+      const isAlreadyCompleted = progress.levelStars[selectedLevel.levelNumber] !== undefined;
+      const coinsReward = (hasRewardedSession || isAlreadyCompleted) ? 0 : 100;
       setHasRewardedSession(true);
 
       handleUpdateProgress({
@@ -579,7 +589,6 @@ export default function App() {
     setShowLevelClear(false);
     setHasClearedCurrentSession(false);
     setHasRewardedSession(false);
-    setShowEarlyClearPopup(false);
     setCurrentView('game');
     startBgmLoop();
   };
@@ -592,32 +601,6 @@ export default function App() {
     if (isTransitioningRef.current) return;
     isTransitioningRef.current = true;
 
-    // Save final stats/scores achieved during this session
-    const finalScore = gameStats.score;
-    const starsAchieved = calculateStars(finalScore, selectedLevel.starRatings);
-    const updatedStars = { 
-      ...progress.levelStars, 
-      [selectedLevel.levelNumber]: Math.max(progress.levelStars[selectedLevel.levelNumber] || 0, starsAchieved) 
-    };
-    const updatedScores = { 
-      ...progress.highScores, 
-      [selectedLevel.levelNumber]: Math.max(progress.highScores[selectedLevel.levelNumber] || 0, finalScore) 
-    };
-    const nextUnlocked = Math.max(progress.levelsUnlocked, selectedLevel.levelNumber + 1);
-
-    const coinsReward = hasRewardedSession ? 0 : 100;
-    setHasRewardedSession(true);
-
-    const updatedProgress = {
-      ...progress,
-      levelsUnlocked: nextUnlocked,
-      levelStars: updatedStars,
-      highScores: updatedScores,
-      coins: progress.coins + coinsReward,
-    };
-
-    handleUpdateProgress(updatedProgress);
-
     // Now transition to the next level
     const nextLvlNum = selectedLevel.levelNumber + 1;
     const hasNextLvl = LEVEL_PRESETS.some(l => l.levelNumber === nextLvlNum);
@@ -627,7 +610,6 @@ export default function App() {
       if (hasNextLvl) {
         handleLaunchLevel(nextLvlNum);
       } else {
-        setShowEarlyClearPopup(false);
         setShowLevelClear(false);
         setHasClearedCurrentSession(false);
         setCurrentView('map');
@@ -969,6 +951,7 @@ export default function App() {
 
   const checkLevelEndingConditions = (currentBoard: BoardGrid) => {
     if (!selectedLevel) return;
+    if (hasClearedCurrentSession) return;
 
     const reachedTargetScore = gameStats.score >= selectedLevel.targetScore;
     const objectivesCompleted = selectedLevel.objectives.every(obj => {
@@ -984,30 +967,29 @@ export default function App() {
     const isTimeDepleted = selectedLevel.mode === 'timed' && gameStats.timeLeft <= 0;
 
     if (isMovesDepleted || isTimeDepleted) {
-      if (canComplete || hasClearedCurrentSession) {
+      if (canComplete) {
         // SUCCESS: The player completed the level!
-        setTimeout(() => {
-          playLevelUpSound();
-          setShowLevelClear(true);
+        setHasClearedCurrentSession(true);
+        setIsPaused(true);
+        setShowLevelClear(true);
+        playLevelUpSound();
 
-          const finalScore = gameStats.score;
-          const starsAchieved = calculateStars(finalScore, selectedLevel.starRatings);
-          const updatedStars = { ...progress.levelStars, [selectedLevel.levelNumber]: Math.max(progress.levelStars[selectedLevel.levelNumber] || 0, starsAchieved) };
-          const updatedScores = { ...progress.highScores, [selectedLevel.levelNumber]: Math.max(progress.highScores[selectedLevel.levelNumber] || 0, finalScore) };
-          
-          const nextUnlocked = Math.max(progress.levelsUnlocked, selectedLevel.levelNumber + 1);
+        const starsAchieved = calculateStars(gameStats.score, selectedLevel.starRatings);
+        const updatedStars = { ...progress.levelStars, [selectedLevel.levelNumber]: Math.max(progress.levelStars[selectedLevel.levelNumber] || 0, starsAchieved) };
+        const updatedScores = { ...progress.highScores, [selectedLevel.levelNumber]: Math.max(progress.highScores[selectedLevel.levelNumber] || 0, gameStats.score) };
+        const nextUnlocked = Math.max(progress.levelsUnlocked, selectedLevel.levelNumber + 1);
 
-          const coinsReward = hasRewardedSession ? 0 : 100;
-          setHasRewardedSession(true);
+        const isAlreadyCompleted = progress.levelStars[selectedLevel.levelNumber] !== undefined;
+        const coinsReward = (hasRewardedSession || isAlreadyCompleted) ? 0 : 100;
+        setHasRewardedSession(true);
 
-          handleUpdateProgress({
-            ...progress,
-            levelsUnlocked: nextUnlocked,
-            levelStars: updatedStars,
-            highScores: updatedScores,
-            coins: progress.coins + coinsReward,
-          });
-        }, 400);
+        handleUpdateProgress({
+          ...progress,
+          levelsUnlocked: nextUnlocked,
+          levelStars: updatedStars,
+          highScores: updatedScores,
+          coins: progress.coins + coinsReward,
+        });
       } else {
         // FAILURE: Truly ran out of moves without reaching the target score
         setTimeout(() => {
@@ -1269,9 +1251,69 @@ export default function App() {
   const isLevelCompleted = selectedLevel ? (isLevel1 ? reachedTargetScore : (reachedTargetScore && objectivesCompleted)) : false;
 
   return (
-    <div className="w-full h-screen bg-slate-950 text-white flex flex-col items-center overflow-hidden">
+    <div className="fixed inset-0 w-full h-full bg-slate-950 text-white flex flex-col items-center overflow-hidden select-none">
       
-      {currentView === 'home' && (
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div
+            key="splash-screen"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
+            className="fixed inset-0 z-[100] bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 flex flex-col items-center justify-center text-white select-none touch-none animate-fade-in"
+          >
+            <div className="flex flex-col items-center gap-8">
+              {/* Typography on top */}
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.8, ease: 'easeOut' }}
+                className="text-center"
+              >
+                <h2 className="text-2xl sm:text-3xl font-sans font-black tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300">
+                  AXUMIT STUDIOS
+                </h2>
+                <div className="h-[2px] w-12 bg-gradient-to-r from-pink-500 to-indigo-500 mx-auto mt-2.5 rounded-full" />
+              </motion.div>
+
+              {/* Logo placeholder below it */}
+              <motion.div
+                initial={{ scale: 0.85, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.8, ease: 'easeOut' }}
+                className="relative flex items-center justify-center w-24 h-24"
+              >
+                {/* Inner pulsing glow */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 blur-xl opacity-40 animate-pulse" />
+                
+                {/* Circular dashed ring */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 12, ease: 'linear' }}
+                  className="absolute inset-[-8px] rounded-full border border-dashed border-indigo-500/20"
+                />
+                
+                {/* Outer rotating ring */}
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ repeat: Infinity, duration: 8, ease: 'linear' }}
+                  className="absolute inset-0 rounded-full border-2 border-indigo-500/30"
+                />
+                
+                {/* Main logo circle */}
+                <div className="w-16 h-16 bg-slate-900 border border-slate-700/80 rounded-full flex items-center justify-center shadow-inner relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-pink-500/10 via-purple-500/20 to-transparent" />
+                  <Sparkles className="w-7 h-7 text-indigo-400" />
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {!showSplash && (
+        <>
+          {currentView === 'home' && (
         <HomeScreen
           progress={progress}
           onStartGame={() => { playClickSound(); setCurrentView('map'); }}
@@ -1298,53 +1340,29 @@ export default function App() {
 
       {currentView === 'game' && selectedLevel && (
         <div 
-          className="w-full max-w-[480px] h-screen h-[100dvh] bg-gradient-to-b from-slate-950 via-purple-950 to-indigo-950 flex flex-col px-3 py-2 relative overflow-hidden select-none"
+          className="w-full max-w-[480px] sm:max-w-[540px] md:max-w-[600px] h-full bg-gradient-to-b from-slate-950 via-purple-950 to-indigo-950 flex flex-col px-3 py-1.5 sm:py-2 relative overflow-hidden select-none"
           style={{ backgroundImage: `url(${selectedLevel.backgroundGradient})` }}
         >
           
           {/* Header section (MAP navigation and score/objectives board) */}
-          <div className="flex flex-col gap-1.5 shrink-0">
-            {/* Header dashboard layout */}
-            <div className="flex justify-between items-center bg-slate-900/40 px-3 py-1 rounded-lg border border-slate-800/60 backdrop-blur-sm">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => { playClickSound(); if (!showLevelClear && !hasClearedCurrentSession) { deductLife(); } setCurrentView('map'); stopBgmLoop(); }}
-                  className="text-[10px] font-mono font-bold bg-slate-950/60 hover:bg-slate-800 border border-slate-800 px-2.5 py-1 rounded-lg transition-all"
-                >
-                  ◀ MAP
-                </button>
-              </div>
-
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => { playClickSound(); setShowRules(true); }}
-                  className="p-1 rounded-md bg-slate-950/60 border border-slate-800 hover:bg-slate-800"
-                >
-                  <HelpCircle className="w-3.5 h-3.5 text-slate-300" />
-                </button>
-                <button
-                  onClick={() => handleLaunchLevel(selectedLevel.levelNumber)}
-                  className="p-1 rounded-md bg-slate-950/60 border border-slate-800 hover:bg-slate-800"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-slate-300" />
-                </button>
-              </div>
-            </div>
-
-            {/* Live Stats display */}
+          <div className="flex flex-col gap-1 shrink-0">
+            {/* Live Stats display with integrated controls */}
             <ScoreBoard
               level={selectedLevel}
               stats={gameStats}
               currentScore={gameStats.score}
               highScore={progress.highScores[selectedLevel.levelNumber] || 0}
               onPauseToggle={() => { playClickSound(); setIsPaused(true); }}
+              onMapClick={() => { playClickSound(); if (!showLevelClear && !hasClearedCurrentSession) { deductLife(); } setCurrentView('map'); stopBgmLoop(); }}
+              onHelpClick={() => { playClickSound(); setShowRules(true); }}
+              onRefreshClick={() => handleLaunchLevel(selectedLevel.levelNumber)}
               lives={progress.lives}
             />
           </div>
 
           {/* Game board section - centered, automatically scaled, fits viewport heights */}
-          <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-1.5 sm:py-2">
-            <div className="relative h-full w-full max-h-[min(100%,480px)] max-w-[min(100%,480px)] aspect-square rounded-2xl shadow-xl">
+          <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-1 sm:py-1.5">
+            <div className="relative h-full w-full max-h-[min(100%,560px)] max-w-[min(100%,560px)] aspect-square rounded-2xl shadow-xl flex items-center justify-center">
               <CandyBoard
                 board={board}
                 selectedIndex={selectedIndex}
@@ -1365,7 +1383,7 @@ export default function App() {
           </div>
 
           {/* Bottom controls / Boosters tray footer section */}
-          <div className="shrink-0 flex flex-col gap-2">
+          <div className="shrink-0 flex flex-col gap-1.5 sm:gap-2">
             <Boosters
               boosters={[
                 { id: 'hammer', name: 'Lollipop Hammer', description: 'Crush any candy tile instantly.', count: progress.boosters['hammer'] || 0, icon: 'hammer', coinCost: 100 },
@@ -1385,7 +1403,7 @@ export default function App() {
                 <button
                   id="persistent-next-level-btn-active"
                   onClick={handleNextLevel}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-sans font-black py-2.5 rounded-xl transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] text-[11px] animate-pulse flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-sans font-black py-2 rounded-lg transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] text-[11px] animate-pulse flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>NEXT LEVEL</span>
                   <span className="text-xs font-bold">➔</span>
@@ -1394,7 +1412,7 @@ export default function App() {
                 <button
                   id="persistent-next-level-btn-inactive"
                   disabled
-                  className="w-full bg-slate-900/50 border border-slate-800/60 text-slate-500 font-sans font-semibold py-2.5 rounded-xl text-[10px] flex items-center justify-center cursor-not-allowed select-none"
+                  className="w-full bg-slate-900/50 border border-slate-800/60 text-slate-500 font-sans font-semibold py-2 rounded-lg text-[10px] flex items-center justify-center cursor-not-allowed select-none"
                 >
                   COMPLETE OBJECTIVES TO ADVANCE
                 </button>
@@ -1516,110 +1534,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* EARLY LEVEL COMPLETE POPUP */}
-      <AnimatePresence>
-        {showEarlyClearPopup && selectedLevel && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ scale: 0.8, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 50 }}
-              className="bg-slate-900 border border-emerald-500/30 rounded-3xl p-8 w-full max-w-sm shadow-2xl text-center text-white flex flex-col items-center gap-5"
-            >
-              {/* Glowing success badge */}
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.5)] border border-emerald-200/20 flex items-center justify-center animate-bounce">
-                <Trophy className="w-8 h-8 text-slate-950" />
-              </div>
-
-              <div>
-                <h2 className="text-3xl font-sans font-black tracking-tight text-emerald-400">
-                  Level Complete!
-                </h2>
-                <p className="text-xs text-slate-400 mt-1 uppercase font-mono tracking-wider">
-                  {selectedLevel.worldName} • Level {selectedLevel.levelNumber}
-                </p>
-              </div>
-
-              {/* Stars display */}
-              <div className="flex gap-2.5 justify-center py-1">
-                {[1, 2, 3].map((starIdx) => (
-                  <StarIcon
-                    key={starIdx}
-                    lit={calculateStars(gameStats.score, selectedLevel.starRatings) >= starIdx}
-                    delay={starIdx * 150}
-                  />
-                ))}
-              </div>
-
-              {/* Stats Summary */}
-              <div className="w-full bg-slate-950/60 p-4 border border-slate-800 rounded-2xl space-y-2 text-sm font-mono text-slate-400">
-                <div className="flex justify-between items-center">
-                  <span>SCORE</span>
-                  <span className="font-bold text-white text-base">
-                    {gameStats.score.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center border-t border-slate-900 pt-2">
-                  <span>{selectedLevel.mode === 'timed' ? 'TIME REMAINING' : 'MOVES REMAINING'}</span>
-                  <span className="font-bold text-emerald-300">
-                    {selectedLevel.mode === 'timed' ? `${gameStats.timeLeft}s` : gameStats.movesLeft}
-                  </span>
-                </div>
-              </div>
-
-              {/* Three Buttons */}
-              <div className="flex flex-col gap-2.5 w-full">
-                {/* 1. Next Level */}
-                {LEVEL_PRESETS.some(lvl => lvl.levelNumber === selectedLevel.levelNumber + 1) ? (
-                  <button
-                    onClick={handleNextLevel}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-sans font-black py-3.5 rounded-xl transition-all shadow-lg hover:scale-103 active:scale-95 text-sm animate-pulse"
-                  >
-                    NEXT LEVEL
-                  </button>
-                ) : (
-                  <div className="w-full bg-slate-950/40 p-3 border border-emerald-500/10 rounded-xl text-center">
-                    <span className="text-xs font-sans font-bold text-indigo-400 block tracking-tight">
-                      🏆 ALL LEVELS BEATEN!
-                    </span>
-                  </div>
-                )}
-
-                {/* 2. Continue Playing */}
-                <button
-                  onClick={() => {
-                    playClickSound();
-                    setShowEarlyClearPopup(false);
-                    setIsPaused(false);
-                  }}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-sans font-bold py-3 rounded-xl transition-all text-xs"
-                >
-                  CONTINUE PLAYING
-                </button>
-
-                {/* 3. Home */}
-                <button
-                  onClick={() => {
-                    playClickSound();
-                    setShowEarlyClearPopup(false);
-                    setCurrentView('home');
-                    stopBgmLoop();
-                  }}
-                  className="w-full py-2.5 hover:bg-slate-850 border border-slate-800 text-slate-400 rounded-xl font-sans font-bold text-xs"
-                >
-                  HOME
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* GAME VICTORY SCREEN */}
       <AnimatePresence>
         {showLevelClear && selectedLevel && (
@@ -1642,7 +1556,7 @@ export default function App() {
 
               <div>
                 <h2 className="text-3xl font-sans font-black tracking-tight text-yellow-400">
-                  Level Cleared!
+                  Level Complete
                 </h2>
                 <p className="text-xs text-slate-400 mt-1 uppercase font-mono tracking-wider">
                   {selectedLevel.worldName}
@@ -1683,7 +1597,7 @@ export default function App() {
                   onClick={handleNextLevel}
                   className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-sans font-black py-4 rounded-xl transition-all shadow-lg hover:scale-103 active:scale-95 text-sm"
                 >
-                  PLAY LEVEL {selectedLevel.levelNumber + 1}
+                  NEXT LEVEL
                 </button>
               ) : (
                 <div className="w-full bg-slate-950/60 p-4 border border-indigo-500/30 rounded-2xl text-center space-y-1.5">
@@ -1697,10 +1611,10 @@ export default function App() {
               )}
 
               <button
-                onClick={() => { playClickSound(); setCurrentView('map'); setShowLevelClear(false); stopBgmLoop(); }}
+                onClick={() => { playClickSound(); setCurrentView('home'); setShowLevelClear(false); stopBgmLoop(); }}
                 className="w-full py-2.5 hover:bg-slate-800 border border-slate-800 text-slate-400 rounded-xl font-sans font-bold text-xs"
               >
-                RETURN TO MAP
+                HOME
               </button>
             </motion.div>
           </motion.div>
@@ -1751,17 +1665,26 @@ export default function App() {
               </div>
 
               <div className="flex flex-col gap-2 w-full">
+                {progress.lives !== undefined && progress.lives > 0 ? (
+                  <button
+                    onClick={() => { playClickSound(); handleLaunchLevel(selectedLevel.levelNumber); }}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 font-sans font-black py-3.5 rounded-xl transition-all shadow-lg hover:scale-103 active:scale-95 text-sm"
+                  >
+                    RETRY LEVEL
+                  </button>
+                ) : (
+                  <div className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-3 px-4 text-center">
+                    <span className="text-xs font-sans font-bold text-rose-400 flex items-center justify-center gap-1.5">
+                      <Heart className="w-4 h-4 fill-rose-500 text-rose-500 animate-pulse" />
+                      NO LIVES REMAINING
+                    </span>
+                  </div>
+                )}
                 <button
-                  onClick={() => { playClickSound(); handleLaunchLevel(selectedLevel.levelNumber); }}
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 font-sans font-black py-3.5 rounded-xl transition-all shadow-lg hover:scale-103 active:scale-95 text-sm"
-                >
-                  RETRY LEVEL
-                </button>
-                <button
-                  onClick={() => { playClickSound(); setCurrentView('map'); setShowGameOver(false); stopBgmLoop(); }}
+                  onClick={() => { playClickSound(); setCurrentView('home'); setShowGameOver(false); stopBgmLoop(); }}
                   className="w-full py-2.5 hover:bg-slate-800 border border-slate-800 text-slate-400 rounded-xl font-sans font-bold text-xs"
                 >
-                  RETURN TO WORLD MAP
+                  HOME
                 </button>
               </div>
             </motion.div>
@@ -1769,6 +1692,8 @@ export default function App() {
         )}
       </AnimatePresence>
 
+        </>
+      )}
     </div>
   );
 }

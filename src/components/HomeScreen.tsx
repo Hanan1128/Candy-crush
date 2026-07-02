@@ -259,10 +259,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <button
                 id="play-journey-btn"
                 onClick={() => { playClickSound(); onStartGame(); }}
-                className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-400 hover:to-indigo-500 text-white font-sans font-black text-lg tracking-wide transition-all shadow-[0_10px_25px_rgba(236,72,153,0.3)] hover:scale-[1.03] active:scale-95 flex items-center justify-center gap-2"
+                className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-400 hover:to-indigo-500 text-white font-sans font-black text-lg tracking-wide transition-all shadow-[0_10px_25px_rgba(236,72,153,0.3)] hover:scale-[1.03] active:scale-95 flex items-center justify-center gap-2 animate-pulse"
               >
                 START SWEET JOURNEY
-                <ChevronRight className="w-5 h-5 animate-ping" />
+                <ChevronRight className="w-5 h-5" />
               </button>
 
               <div className="grid grid-cols-2 gap-3">
