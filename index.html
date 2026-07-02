@@ -1,13 +1,120 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Candy crush</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Load Google Fonts for premium retro-arcade look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="screen active">
+        <div class="splash-content">
+            <h2 class="company-sub">DEVELOPED BY</h2>
+            <h1 class="splash-title">AXUMIT STUDIOS</h1>
+            <!-- Logo placeholder with beautiful glow pulse -->
+            <div class="logo-placeholder">
+                <div class="logo-inner">A</div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Main Menu Screen -->
+    <div id="main-menu" class="screen">
+        <div class="menu-content">
+            <!-- Top Branding / Header -->
+            <div class="menu-branding">
+                <div class="branding-logo">
+                    <div class="branding-logo-inner"></div>
+                </div>
+                <span class="branding-text">Axumit Studios Presents</span>
+            </div>
+
+            <div class="title-container">
+                <h1 class="game-title">
+                    <span class="title-line-1">CANDY</span>
+                    <span class="title-line-2">CRUSH</span>
+                </h1>
+                <p class="game-desc">Play with me</p>
+                
+                <!-- High Score Indicator (Professional Polish) -->
+                <div class="high-score-container">
+                    <span class="high-score-label">Best Score</span>
+                    <span class="high-score-val">1,240,500</span>
+                </div>
+            </div>
+            
+            <div class="menu-buttons">
+                <button id="btn-start" class="btn btn-primary" aria-label="Start Game">START GAME</button>
+            </div>
+            
+            <div class="menu-footer">
+                <div class="toggle-container">
+                    <span class="toggle-label">SOUND EFFECTS</span>
+                    <button id="btn-sound" class="btn-toggle active" aria-label="Toggle Sound">ON</button>
+                </div>
+                
+                <!-- Studio Footer -->
+                <div class="menu-studio-footer">
+                    <div class="studio-footer-line"></div>
+                    <span class="studio-footer-text">AXUMIT STUDIOS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gameplay Screen -->
+    <div id="game-screen" class="screen">
+        <div class="game-layout">
+            <!-- HUD Overlay -->
+            <div class="game-hud">
+                <div class="hud-item score-hud">
+                    <div class="hud-label">SCORE</div>
+                    <div id="score-val" class="hud-value">0</div>
+                </div>
+                <div class="hud-item target-hud">
+                    <div class="hud-label">TARGET</div>
+                    <div id="target-val" class="hud-value">500</div>
+                </div>
+                <div class="hud-item moves-hud">
+                    <div class="hud-label">MOVES</div>
+                    <div id="moves-val" class="hud-value">25</div>
+                </div>
+            </div>
+
+            <!-- Canvas Wrapper for precise scaling -->
+            <div class="canvas-container">
+                <canvas id="game-canvas"></canvas>
+                <!-- Splash / Level Banners overlay -->
+                <div id="game-banner" class="game-overlay-banner">
+                    <h2 id="banner-text">LEVEL UP!</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen">
+        <div class="game-over-content">
+            <h1 class="game-over-title">GAME OVER</h1>
+            
+            <div class="result-container">
+                <p class="result-label">FINAL SCORE</p>
+                <p id="final-score" class="result-value">0</p>
+                <p id="game-over-reason" class="result-desc">Out of moves!</p>
+            </div>
+            
+            <div class="game-over-buttons">
+                <button id="btn-restart" class="btn btn-primary" aria-label="Restart Game">PLAY AGAIN</button>
+                <button id="btn-menu" class="btn btn-secondary" aria-label="Go to Main Menu">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
