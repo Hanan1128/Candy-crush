@@ -1,13 +1,18 @@
-src/
+# Ignore Android project files and folders to keep the Vercel upload clean and focused
 app/
 gradle/
+build.gradle.kts
+gradle.properties
+local.properties
+settings.gradle.kts
+
+# Ignore Node/Vite local outputs and environment files
 node_modules/
 dist/
 .env
-local.properties
-build.gradle.kts
-settings.gradle.kts
-gradle.properties
-tsconfig.json
-vite.config.ts
-package.json
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.DS_Store
+*.log
