@@ -158,7 +158,10 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
         matchLength++;
       } else {
         if (matchLength >= 3 && matchColor) {
-          const indices = Array.from({ length: matchLength }, (_, i) => startIndex + i);
+          const indices: number[] = [];
+          for (let i = 0; i < matchLength; i++) {
+            indices.push(startIndex + i);
+          }
           matches.push({ indices, color: matchColor, type: 'row' });
         }
         matchColor = canMatch ? candy.color : null;
@@ -167,7 +170,10 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
       }
     }
     if (matchLength >= 3 && matchColor) {
-      const indices = Array.from({ length: matchLength }, (_, i) => startIndex + i);
+      const indices: number[] = [];
+      for (let i = 0; i < matchLength; i++) {
+        indices.push(startIndex + i);
+      }
       matches.push({ indices, color: matchColor, type: 'row' });
     }
   }
@@ -189,7 +195,10 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
         matchLength++;
       } else {
         if (matchLength >= 3 && matchColor) {
-          const indices = Array.from({ length: matchLength }, (_, i) => startIndex + i * 8);
+          const indices: number[] = [];
+          for (let i = 0; i < matchLength; i++) {
+            indices.push(startIndex + i * 8);
+          }
           matches.push({ indices, color: matchColor, type: 'col' });
         }
         matchColor = canMatch ? candy.color : null;
@@ -198,7 +207,10 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
       }
     }
     if (matchLength >= 3 && matchColor) {
-      const indices = Array.from({ length: matchLength }, (_, i) => startIndex + i * 8);
+      const indices: number[] = [];
+      for (let i = 0; i < matchLength; i++) {
+        indices.push(startIndex + i * 8);
+      }
       matches.push({ indices, color: matchColor, type: 'col' });
     }
   }
@@ -267,16 +279,10 @@ export const isValidSwap = (board: BoardGrid, indexA: number, indexB: number): b
   const hasColorBomb = (cellA.candy?.type === 'color-bomb') || (cellB.candy?.type === 'color-bomb');
   if (hasColorBomb) return true;
 
-  // Swap and test
-  const testBoard = board.map(cell => ({ ...cell }));
-  const tempCandy = testBoard[indexA].candy;
-  const tempIng = testBoard[indexA].isIngredient;
-
-  testBoard[indexA].candy = testBoard[indexB].candy;
-  testBoard[indexA].isIngredient = testBoard[indexB].isIngredient;
-
-  testBoard[indexB].candy = tempCandy;
-  testBoard[indexB].isIngredient = tempIng;
+  // Swap and test with shallow copy of board array and only cloning the two modified cells
+  const testBoard = [...board];
+  testBoard[indexA] = { ...cellA, candy: cellB.candy, isIngredient: cellB.isIngredient };
+  testBoard[indexB] = { ...cellB, candy: cellA.candy, isIngredient: cellA.isIngredient };
 
   const matches = checkForMatches(testBoard);
   return matches.length > 0;
@@ -317,11 +323,12 @@ export const findHintMove = (board: BoardGrid): [number, number] | null => {
         const rightIdx = idx + 1;
         if (isValidSwap(board, idx, rightIdx)) {
           // Verify it generates actual matches
-          const testBoard = board.map(cell => ({ ...cell }));
-          const temp = testBoard[idx].candy;
-          testBoard[idx].candy = testBoard[rightIdx].candy;
-          testBoard[rightIdx].candy = temp;
-          if (checkForMatches(testBoard).length > 0 || temp?.type === 'color-bomb' || testBoard[idx].candy?.type === 'color-bomb') {
+          const cellA = board[idx];
+          const cellB = board[rightIdx];
+          const testBoard = [...board];
+          testBoard[idx] = { ...cellA, candy: cellB.candy };
+          testBoard[rightIdx] = { ...cellB, candy: cellA.candy };
+          if (checkForMatches(testBoard).length > 0 || cellA.candy?.type === 'color-bomb' || cellB.candy?.type === 'color-bomb') {
             return [idx, rightIdx];
           }
         }
@@ -331,11 +338,12 @@ export const findHintMove = (board: BoardGrid): [number, number] | null => {
       if (r < 7) {
         const downIdx = idx + 8;
         if (isValidSwap(board, idx, downIdx)) {
-          const testBoard = board.map(cell => ({ ...cell }));
-          const temp = testBoard[idx].candy;
-          testBoard[idx].candy = testBoard[downIdx].candy;
-          testBoard[downIdx].candy = temp;
-          if (checkForMatches(testBoard).length > 0 || temp?.type === 'color-bomb' || testBoard[idx].candy?.type === 'color-bomb') {
+          const cellA = board[idx];
+          const cellB = board[downIdx];
+          const testBoard = [...board];
+          testBoard[idx] = { ...cellA, candy: cellB.candy };
+          testBoard[downIdx] = { ...cellB, candy: cellA.candy };
+          if (checkForMatches(testBoard).length > 0 || cellA.candy?.type === 'color-bomb' || cellB.candy?.type === 'color-bomb') {
             return [idx, downIdx];
           }
         }
