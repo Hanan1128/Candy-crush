@@ -13,6 +13,7 @@ interface CandyBoardProps {
   selectedBooster: BoosterType | null;
   onApplyBooster: (index: number) => void;
   hintIndices: [number, number] | null;
+  performanceMode?: boolean;
 }
 
 export const CandyBoard: React.FC<CandyBoardProps> = ({
@@ -24,6 +25,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   selectedBooster,
   onApplyBooster,
   hintIndices,
+  performanceMode = false,
 }) => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -499,11 +501,12 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                 onDragEnd={handleDragEnd}
                 onClick={() => handleCellClick(index)}
                 className="absolute inset-0 flex items-center justify-center z-10"
-                initial={{ scale: 0, y: -60, opacity: 0 }}
+                style={{ willChange: 'transform' }}
+                initial={performanceMode ? { scale: 0.9, opacity: 0 } : { scale: 0, y: -60, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0, transition: { duration: 0.15 } }}
-                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                layoutId={`candy-layout-${cell.candy.id}`}
+                exit={performanceMode ? { opacity: 0, transition: { duration: 0.05 } } : { scale: 0, opacity: 0, transition: { duration: 0.08 } }}
+                transition={performanceMode ? { duration: 0.08 } : { type: 'spring', stiffness: 600, damping: 30 }}
+                layoutId={performanceMode ? undefined : `candy-layout-${cell.candy.id}`}
               >
                 {renderCandySVG(cell.candy.color, cell.candy.type, isSelected, cell.candy.bombTimer, cell.obstacle.startsWith('ice'))}
               </motion.div>
@@ -517,10 +520,12 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                 onDragEnd={handleDragEnd}
                 onClick={() => handleCellClick(index)}
                 className="absolute inset-0 flex items-center justify-center z-10"
-                initial={{ scale: 0 }}
+                style={{ willChange: 'transform' }}
+                initial={performanceMode ? { scale: 0.9, opacity: 0 } : { scale: 0 }}
                 animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                layoutId="ingredient-layout"
+                exit={performanceMode ? { opacity: 0, transition: { duration: 0.05 } } : { scale: 0 }}
+                transition={performanceMode ? { duration: 0.08 } : undefined}
+                layoutId={performanceMode ? undefined : "ingredient-layout"}
               >
                 {renderIngredient(isSelected)}
               </motion.div>

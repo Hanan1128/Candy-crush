@@ -110,6 +110,13 @@ export default function App() {
   // Navigation
   const [currentView, setCurrentView] = useState<ActiveView>('home');
   const [showSplash, setShowSplash] = useState(true);
+  const [performanceMode, setPerformanceMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+      return isMobile;
+    }
+    return false;
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -569,9 +576,10 @@ export default function App() {
     else if (color === 'stone') pColor = '#64748b';
     else pColor = COLOR_HEX[color] || '#ff007f';
 
-    for (let k = 0; k < 12; k++) {
+    const maxParticles = performanceMode ? 4 : 12;
+    for (let k = 0; k < maxParticles; k++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 1.5 + Math.random() * 5;
+      const speed = performanceMode ? 1.0 + Math.random() * 3 : 1.5 + Math.random() * 5;
       particlesRef.current.push({
         id: generateId(),
         x,
@@ -580,7 +588,7 @@ export default function App() {
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - 1.2,
         life: 0.9,
-        size: 2.5 + Math.random() * 4,
+        size: performanceMode ? 2.0 + Math.random() * 2.5 : 2.5 + Math.random() * 4,
       });
     }
     startTickIfNeeded();
@@ -898,7 +906,7 @@ export default function App() {
     }));
 
     // Delay briefly to show match pop
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 120));
 
     // Cascade refill gravity fall
     cascadeRefillCycle(workingBoard, comboMultiplier + 1, chocolateCleared);
@@ -947,7 +955,7 @@ export default function App() {
     setBoard(workingBoard);
 
     // Slide animation delay
-    await new Promise((resolve) => setTimeout(resolve, 380));
+    await new Promise((resolve) => setTimeout(resolve, 180));
 
     // Check Escorts post-gravity
     const escortsEscaped = processEscorts(workingBoard);
@@ -1066,7 +1074,7 @@ export default function App() {
     setBoard(workingBoard);
     playSwapSound();
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 120));
 
     // Color Bomb combinatorics checks
     const hasColorBomb = (candyA?.type === 'color-bomb') || (candyB?.type === 'color-bomb');
@@ -1187,7 +1195,7 @@ export default function App() {
       setBoard(workingBoard);
       setSelectedBooster(null);
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       cascadeRefillCycle(workingBoard, 1, false);
 
     } else if (selectedBooster === 'color-remover') {
@@ -1400,6 +1408,7 @@ export default function App() {
                 selectedBooster={selectedBooster}
                 onApplyBooster={handleApplyBoosterOnCell}
                 hintIndices={hintIndices}
+                performanceMode={performanceMode}
               />
 
               {/* Sparkle effects canvas layer */}
@@ -1468,6 +1477,27 @@ export default function App() {
             >
               <h2 className="text-3xl font-sans font-black tracking-tight mb-2">GAME PAUSED</h2>
               <p className="text-xs text-slate-400 mb-6">Take a quick breath, then jump back into the sweet combos!</p>
+
+              {/* Performance Mode / Battery Saver Settings */}
+              <div className="bg-slate-950/60 p-4 border border-slate-800 rounded-2xl mb-5 space-y-2 text-left">
+                <span className="font-bold text-[10px] text-indigo-400 block tracking-wider uppercase font-mono">GAME SETTINGS</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-col">
+                    <span className="text-[11px] text-slate-300 font-semibold">Performance Mode</span>
+                    <span className="text-[9px] text-slate-500">Smoother cascading & less battery drainage</span>
+                  </div>
+                  <button
+                    onClick={() => { playClickSound(); setPerformanceMode(!performanceMode); }}
+                    className={`px-2.5 py-1 rounded-full text-[9px] font-sans font-black tracking-wider transition-all border ${
+                      performanceMode 
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                        : 'bg-slate-800 text-slate-400 border-slate-700'
+                    }`}
+                  >
+                    {performanceMode ? 'ENABLED' : 'HIGH GRAPHICS'}
+                  </button>
+                </div>
+              </div>
 
               <div className="flex flex-col gap-3">
                 <button
