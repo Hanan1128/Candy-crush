@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import { BoardGrid, CandyColor, CandyType, ObstacleType, JellyType, BoosterType } from '../types';
 import { Sparkles, HelpCircle, AlertCircle, ShieldAlert } from 'lucide-react';
 import { playClickSound } from '../audio';
@@ -357,10 +357,11 @@ export const CandyBoard: React.FC<CandyBoardProps> = React.memo(({
   };
 
   return (
-    <div 
-      id="candy-board"
-      className="grid grid-cols-8 gap-0.5 sm:gap-1 p-1 sm:p-1.5 bg-slate-900/95 border-2 sm:border-4 border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-[0_15px_30px_rgba(0,0,0,0.6)] w-full h-full max-w-[min(100%,560px)] max-h-[min(100%,560px)] aspect-square select-none touch-none relative"
-    >
+    <LayoutGroup id="candy-board-layout-group">
+      <div 
+        id="candy-board"
+        className="grid grid-cols-8 gap-0.5 sm:gap-1 p-1 sm:p-1.5 bg-slate-900/95 border-2 sm:border-4 border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-[0_15px_30px_rgba(0,0,0,0.6)] w-full h-full max-w-[min(100%,560px)] max-h-[min(100%,560px)] aspect-square select-none touch-none relative"
+      >
       {/* Global SVG gradients definition to avoid duplicates, shrinking DOM and increasing render speed by 10x */}
       <svg width="0" height="0" className="absolute pointer-events-none" style={{ position: 'absolute', width: 0, height: 0 }}>
         <defs>
@@ -502,10 +503,11 @@ export const CandyBoard: React.FC<CandyBoardProps> = React.memo(({
                 onClick={() => handleCellClick(index)}
                 className="absolute inset-0 flex items-center justify-center z-10"
                 style={{ willChange: 'transform' }}
-                initial={performanceMode ? { scale: 0.9, opacity: 0 } : { scale: 0, y: -60, opacity: 0 }}
-                animate={{ scale: 1, y: 0, opacity: 1 }}
-                exit={performanceMode ? { opacity: 0, transition: { duration: 0.05 } } : { scale: 0, opacity: 0, transition: { duration: 0.08 } }}
-                transition={performanceMode ? { duration: 0.08 } : { type: 'spring', stiffness: 600, damping: 30 }}
+                initial={performanceMode ? { scale: 0.9, opacity: 0 } : { scale: 0.3, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={performanceMode ? { opacity: 0, transition: { duration: 0.05 } } : { scale: 0, opacity: 0, transition: { duration: 0.05 } }}
+                transition={performanceMode ? { duration: 0.05 } : { type: 'spring', stiffness: 800, damping: 35 }}
+                layout={performanceMode ? undefined : "position"}
                 layoutId={performanceMode ? undefined : `candy-layout-${cell.candy.id}`}
               >
                 {renderCandySVG(cell.candy.color, cell.candy.type, isSelected, cell.candy.bombTimer, cell.obstacle === 'ice1' || cell.obstacle === 'ice2')}
@@ -599,6 +601,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = React.memo(({
         );
       })}
 
-    </div>
+      </div>
+    </LayoutGroup>
   );
 });
