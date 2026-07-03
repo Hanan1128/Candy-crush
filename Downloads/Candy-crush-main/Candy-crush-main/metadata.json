@@ -1,6 +1,0 @@
-{
-  "name": "Candy Crush",
-  "description": "A highly polished, interactive Candy Crush game with smooth match-3 matching, sliding cascades, scoring, levels, audio synthesis, and power-up boosters.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
