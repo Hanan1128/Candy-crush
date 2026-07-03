@@ -114,7 +114,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = React.memo(({
         if (cell.obstacle !== 'locked') {
           onSelect(index);
         } else {
-          onSelect(null);
+          onSelect(index);
         }
       }
     }
@@ -508,7 +508,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = React.memo(({
                 transition={performanceMode ? { duration: 0.08 } : { type: 'spring', stiffness: 600, damping: 30 }}
                 layoutId={performanceMode ? undefined : `candy-layout-${cell.candy.id}`}
               >
-                {renderCandySVG(cell.candy.color, cell.candy.type, isSelected, cell.candy.bombTimer, cell.obstacle.startsWith('ice'))}
+                {renderCandySVG(cell.candy.color, cell.candy.type, isSelected, cell.candy.bombTimer, cell.obstacle === 'ice1' || cell.obstacle === 'ice2')}
               </motion.div>
             )}
 
@@ -534,7 +534,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = React.memo(({
             {/* OBSTACLE LAYER FOREGROUNDS */}
 
             {/* ICE OBSTACLE OVERLAYS */}
-            {cell.obstacle.startsWith('ice') && (
+            {(cell.obstacle === 'ice1' || cell.obstacle === 'ice2') && (
               <motion.div 
                 className="absolute inset-0 bg-blue-100/50 backdrop-blur-[1px] border border-cyan-200/50 rounded-xl z-20 flex items-center justify-center pointer-events-none"
                 initial={{ opacity: 0 }}
