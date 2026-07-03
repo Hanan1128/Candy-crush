@@ -10,7 +10,7 @@ interface BoostersProps {
   isAnimating: boolean;
 }
 
-export const Boosters: React.FC<BoostersProps> = ({
+export const Boosters: React.FC<BoostersProps> = React.memo(({
   boosters,
   selectedBooster,
   onSelectBooster,
@@ -112,4 +112,4 @@ export const Boosters: React.FC<BoostersProps> = ({
       )}
     </div>
   );
-};
+});

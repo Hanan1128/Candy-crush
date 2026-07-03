@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Candy, 
@@ -206,14 +206,14 @@ export default function App() {
           continue;
         }
 
-        currentCtx.save();
-        currentCtx.globalAlpha = p.life;
+        currentCtx.globalAlpha = Math.max(0, Math.min(1, p.life));
         currentCtx.beginPath();
         currentCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         currentCtx.fillStyle = p.color;
         currentCtx.fill();
-        currentCtx.restore();
       }
+
+      currentCtx.globalAlpha = 1.0;
 
       requestAnimationFrame(tick);
     };
@@ -1048,7 +1048,7 @@ export default function App() {
   };
 
   // Perform adjacent swappings
-  const handleSwap = async (indexA: number, indexB: number) => {
+  const handleSwap = useCallback(async (indexA: number, indexB: number) => {
     setIsAnimating(true);
     setSelectedIndex(null);
 
@@ -1152,20 +1152,10 @@ export default function App() {
       playSwapSound();
       setIsAnimating(false);
     }
-  };
-
-  const handleCellSelect = (index: number) => {
-    if (isAnimating) return;
-    if (selectedBooster) {
-      handleApplyBoosterOnCell(index);
-    } else {
-      setSelectedIndex(index);
-      playClickSound();
-    }
-  };
+  }, [board, selectedLevel, resolveBoardMatches, triggerAlert]);
 
   // Booster deployment triggers
-  const handleApplyBoosterOnCell = async (index: number) => {
+  const handleApplyBoosterOnCell = useCallback(async (index: number) => {
     if (!selectedBooster || !selectedLevel) return;
 
     setIsAnimating(true);
@@ -1238,7 +1228,17 @@ export default function App() {
       setIsAnimating(false);
       triggerAlert("+5 Extra Moves Awarded!");
     }
-  };
+  }, [selectedBooster, selectedLevel, board, progress, handleUpdateProgress, spawnParticles, cascadeRefillCycle, resolveBoardMatches, triggerAlert]);
+
+  const handleCellSelect = useCallback((index: number) => {
+    if (isAnimating) return;
+    if (selectedBooster) {
+      handleApplyBoosterOnCell(index);
+    } else {
+      setSelectedIndex(index);
+      playClickSound();
+    }
+  }, [isAnimating, selectedBooster, handleApplyBoosterOnCell]);
 
   const handleShuffleBoosterFromPanel = () => {
     if (isAnimating) return;

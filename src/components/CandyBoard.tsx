@@ -16,7 +16,7 @@ interface CandyBoardProps {
   performanceMode?: boolean;
 }
 
-export const CandyBoard: React.FC<CandyBoardProps> = ({
+export const CandyBoard: React.FC<CandyBoardProps> = React.memo(({
   board,
   selectedIndex,
   onSelect,
@@ -601,4 +601,4 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
     </div>
   );
-};
+});
