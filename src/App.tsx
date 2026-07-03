@@ -153,6 +153,66 @@ export default function App() {
   // Particle canvas references
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particlesRef = useRef<Particle[]>([]);
+  const isTickRunningRef = useRef<boolean>(false);
+
+  const startTickIfNeeded = () => {
+    if (isTickRunningRef.current) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    isTickRunningRef.current = true;
+
+    const tick = () => {
+      if (!canvasRef.current || particlesRef.current.length === 0) {
+        isTickRunningRef.current = false;
+        if (canvasRef.current) {
+          const cleanCtx = canvasRef.current.getContext('2d');
+          if (cleanCtx) {
+            cleanCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          }
+        }
+        return;
+      }
+
+      const currentCtx = canvasRef.current.getContext('2d');
+      if (!currentCtx) {
+        isTickRunningRef.current = false;
+        return;
+      }
+
+      currentCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      const particles = particlesRef.current;
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.16; // soft gravity
+        p.life -= 0.025; // life decay
+        p.size *= 0.97; // gradual shrink
+
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        currentCtx.save();
+        currentCtx.globalAlpha = p.life;
+        currentCtx.beginPath();
+        currentCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        currentCtx.fillStyle = p.color;
+        currentCtx.fill();
+        currentCtx.restore();
+      }
+
+      requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
+  };
 
   // Count matches metrics for achievements
   const totalMatchesCountRef = useRef<number>(0);
@@ -312,56 +372,23 @@ export default function App() {
 
   // High Performance Canvas Sparkle particle loops
   useEffect(() => {
-    let animId: number;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
 
     const resize = () => {
       const boardEl = document.getElementById('candy-board');
       if (boardEl && canvas) {
         canvas.width = boardEl.clientWidth;
         canvas.height = boardEl.clientHeight;
+        if (particlesRef.current.length > 0) {
+          startTickIfNeeded();
+        }
       }
     };
     resize();
     window.addEventListener('resize', resize);
 
-    const tick = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const particles = particlesRef.current;
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.16; // soft gravity
-        p.life -= 0.025; // life decay
-        p.size *= 0.97; // gradual shrink
-
-        if (p.life <= 0) {
-          particles.splice(i, 1);
-          continue;
-        }
-
-        ctx.save();
-        ctx.globalAlpha = p.life;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.shadowBlur = p.size * 2.5;
-        ctx.shadowColor = p.color;
-        ctx.fill();
-        ctx.restore();
-      }
-
-      animId = requestAnimationFrame(tick);
-    };
-    tick();
-
     return () => {
-      cancelAnimationFrame(animId);
       window.removeEventListener('resize', resize);
     };
   }, [currentView, selectedLevel]);
@@ -556,6 +583,7 @@ export default function App() {
         size: 2.5 + Math.random() * 4,
       });
     }
+    startTickIfNeeded();
   };
 
   const triggerAlert = (msg: string) => {

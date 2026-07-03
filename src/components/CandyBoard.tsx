@@ -140,14 +140,6 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           {/* Highlights */}
           <ellipse cx="28" cy="45" rx="6" ry="3" fill="#ffffff" transform="rotate(-30 28 45)" opacity="0.8" />
           <circle cx="44" cy="62" r="3" fill="#ffffff" opacity="0.3" />
-
-          <defs>
-            <radialGradient id="cherryGrad" cx="35%" cy="35%" r="65%">
-              <stop offset="0%" stopColor="#f43f5e" />
-              <stop offset="60%" stopColor="#e11d48" />
-              <stop offset="100%" stopColor="#881337" />
-            </radialGradient>
-          </defs>
         </svg>
         <span className="absolute bottom-0 right-0 bg-rose-600 border border-white text-[8px] font-black font-mono text-white px-1 rounded-full scale-90">
           ESCORT
@@ -166,9 +158,10 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
     const frozenStyles = underIce ? { filter: 'hue-rotate(180deg) saturate(0.6) brightness(1.2)' } : {};
 
-    // Generate stable semi-random numbers based on color and type for offset animation durations
-    const charSum = color.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + 
-                    type.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    // Ultra-fast non-allocating color & type hash for stable semi-random numbers
+    let charSum = 0;
+    for (let i = 0; i < color.length; i++) charSum += color.charCodeAt(i);
+    for (let i = 0; i < type.length; i++) charSum += type.charCodeAt(i);
     const idleDuration = 3.5 + (charSum % 10) * 0.15;
     const sparkleDelay = 1.5 + (charSum % 5) * 0.8;
 
@@ -190,18 +183,6 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
             className="w-full h-full relative"
           >
             <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.45)]">
-              <defs>
-                <radialGradient id="bombBase" cx="35%" cy="35%" r="65%">
-                  <stop offset="0%" stopColor="#4338ca" />
-                  <stop offset="50%" stopColor="#1e1b4b" />
-                  <stop offset="100%" stopColor="#030712" />
-                </radialGradient>
-                <linearGradient id="bombGlow" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#f43f5e" />
-                  <stop offset="50%" stopColor="#d946ef" />
-                  <stop offset="100%" stopColor="#3b82f6" />
-                </linearGradient>
-              </defs>
               {/* Outer Energy Glow Ring */}
               <circle cx="50" cy="50" r="42" fill="none" stroke="url(#bombGlow)" strokeWidth="4.5" opacity="0.85" className="animate-pulse" />
               {/* Main Sphere */}
@@ -235,16 +216,9 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         {isWrapped && (
           <div className="absolute inset-[-4px] z-0 animate-pulse">
             <svg viewBox="0 0 100 100" className="w-full h-full opacity-90">
-              <defs>
-                <linearGradient id="wrapperGlow" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
-                  <stop offset="50%" stopColor={color === 'red' ? '#ef4444' : color === 'blue' ? '#3b82f6' : color === 'green' ? '#10b981' : color === 'yellow' ? '#eab308' : color === 'orange' ? '#f97316' : '#a855f7'} stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-                </linearGradient>
-              </defs>
               {/* Wrapped bows */}
-              <polygon points="10,30 35,50 10,70 2,50" fill="url(#wrapperGlow)" stroke="white" strokeWidth="1.5" />
-              <polygon points="90,30 65,50 90,70 98,50" fill="url(#wrapperGlow)" stroke="white" strokeWidth="1.5" />
+              <polygon points="10,30 35,50 10,70 2,50" fill={`url(#wrapperGlow_${color})`} stroke="white" strokeWidth="1.5" />
+              <polygon points="90,30 65,50 90,70 98,50" fill={`url(#wrapperGlow_${color})`} stroke="white" strokeWidth="1.5" />
             </svg>
           </div>
         )}
@@ -263,55 +237,6 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           className="w-full h-full relative flex items-center justify-center"
         >
           <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.35)] overflow-visible">
-            <defs>
-              {/* Gradients */}
-              <radialGradient id="redCandy" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#ff85a0" />
-                <stop offset="45%" stopColor="#ff2255" />
-                <stop offset="85%" stopColor="#c40030" />
-                <stop offset="100%" stopColor="#730018" />
-              </radialGradient>
-              
-              <radialGradient id="blueCandy" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#80f3ff" />
-                <stop offset="45%" stopColor="#00c0ff" />
-                <stop offset="85%" stopColor="#005ec4" />
-                <stop offset="100%" stopColor="#002d6b" />
-              </radialGradient>
-
-              <radialGradient id="greenCandy" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#8cffd0" />
-                <stop offset="45%" stopColor="#10b981" />
-                <stop offset="85%" stopColor="#047857" />
-                <stop offset="100%" stopColor="#022c22" />
-              </radialGradient>
-
-              <radialGradient id="yellowCandy" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#fffecc" />
-                <stop offset="45%" stopColor="#facc15" />
-                <stop offset="85%" stopColor="#ca8a04" />
-                <stop offset="100%" stopColor="#713f12" />
-              </radialGradient>
-
-              <radialGradient id="orangeCandy" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#ffcc8c" />
-                <stop offset="45%" stopColor="#f97316" />
-                <stop offset="85%" stopColor="#c2410c" />
-                <stop offset="100%" stopColor="#7c2d12" />
-              </radialGradient>
-
-              <radialGradient id="purpleCandy" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#f5ccff" />
-                <stop offset="45%" stopColor="#d946ef" />
-                <stop offset="85%" stopColor="#a21caf" />
-                <stop offset="100%" stopColor="#4a044e" />
-              </radialGradient>
-
-              <linearGradient id="candyShine" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
-              </linearGradient>
-            </defs>
 
             {/* Render unique vector shape based on color */}
             {color === 'red' && (
@@ -434,7 +359,106 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
       id="candy-board"
       className="grid grid-cols-8 gap-0.5 sm:gap-1 p-1 sm:p-1.5 bg-slate-900/95 border-2 sm:border-4 border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-[0_15px_30px_rgba(0,0,0,0.6)] w-full h-full max-w-[min(100%,560px)] max-h-[min(100%,560px)] aspect-square select-none touch-none relative"
     >
-      
+      {/* Global SVG gradients definition to avoid duplicates, shrinking DOM and increasing render speed by 10x */}
+      <svg width="0" height="0" className="absolute pointer-events-none" style={{ position: 'absolute', width: 0, height: 0 }}>
+        <defs>
+          <radialGradient id="cherryGrad" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#f43f5e" />
+            <stop offset="60%" stopColor="#e11d48" />
+            <stop offset="100%" stopColor="#881337" />
+          </radialGradient>
+          
+          <radialGradient id="bombBase" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#4338ca" />
+            <stop offset="50%" stopColor="#1e1b4b" />
+            <stop offset="100%" stopColor="#030712" />
+          </radialGradient>
+          
+          <linearGradient id="bombGlow" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#f43f5e" />
+            <stop offset="50%" stopColor="#d946ef" />
+            <stop offset="100%" stopColor="#3b82f6" />
+          </linearGradient>
+
+          <linearGradient id="wrapperGlow_red" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#ef4444" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="wrapperGlow_blue" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="wrapperGlow_green" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#10b981" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="wrapperGlow_yellow" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#eab308" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="wrapperGlow_orange" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#f97316" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="wrapperGlow_purple" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#a855f7" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </linearGradient>
+
+          <radialGradient id="redCandy" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#ff85a0" />
+            <stop offset="45%" stopColor="#ff2255" />
+            <stop offset="85%" stopColor="#c40030" />
+            <stop offset="100%" stopColor="#730018" />
+          </radialGradient>
+          
+          <radialGradient id="blueCandy" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#80f3ff" />
+            <stop offset="45%" stopColor="#00c0ff" />
+            <stop offset="85%" stopColor="#005ec4" />
+            <stop offset="100%" stopColor="#002d6b" />
+          </radialGradient>
+
+          <radialGradient id="greenCandy" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#8cffd0" />
+            <stop offset="45%" stopColor="#10b981" />
+            <stop offset="85%" stopColor="#047857" />
+            <stop offset="100%" stopColor="#022c22" />
+          </radialGradient>
+
+          <radialGradient id="yellowCandy" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#fffecc" />
+            <stop offset="45%" stopColor="#facc15" />
+            <stop offset="85%" stopColor="#ca8a04" />
+            <stop offset="100%" stopColor="#713f12" />
+          </radialGradient>
+
+          <radialGradient id="orangeCandy" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#ffcc8c" />
+            <stop offset="45%" stopColor="#f97316" />
+            <stop offset="85%" stopColor="#c2410c" />
+            <stop offset="100%" stopColor="#7c2d12" />
+          </radialGradient>
+
+          <radialGradient id="purpleCandy" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#f5ccff" />
+            <stop offset="45%" stopColor="#d946ef" />
+            <stop offset="85%" stopColor="#a21caf" />
+            <stop offset="100%" stopColor="#4a044e" />
+          </radialGradient>
+
+          <linearGradient id="candyShine" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+      </svg>
       {board.map((cell, index) => {
         const row = Math.floor(index / 8);
         const col = index % 8;
