@@ -96,6 +96,14 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Boot the game once the DOM and script.js are fully loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() { GameStateManager.init(); });
+        } else {
+            GameStateManager.init();
+        }
+    </script>
 </body>
 
 </html>
