@@ -814,12 +814,12 @@ export default function App() {
 
       // Spawn Specials
       const spawnIdx = m.indices[Math.floor(size / 2)];
-      if (size >= 5) {
+      if (m.shape === 'row5' || m.shape === 'col5' || size >= 5 && m.type !== 'intersection') {
         specialSpawns.push({ index: spawnIdx, color: m.color, type: 'color-bomb' });
       } else if (size === 4) {
         const type: CandyType = m.type === 'row' ? 'striped-col' : 'striped-row';
         specialSpawns.push({ index: spawnIdx, color: m.color, type });
-      } else if (m.type === 'intersection') {
+      } else if (m.type === 'intersection' || m.shape === 'T' || m.shape === 'L') {
         specialSpawns.push({ index: spawnIdx, color: m.color, type: 'wrapped' });
       }
     });
@@ -906,10 +906,10 @@ export default function App() {
     }));
 
     // Delay briefly to show match pop
-    await new Promise((resolve) => setTimeout(resolve, 120));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Cascade refill gravity fall
-    cascadeRefillCycle(workingBoard, comboMultiplier + 1, chocolateCleared);
+    await cascadeRefillCycle(workingBoard, comboMultiplier + 1, chocolateCleared);
   };
 
   const cascadeRefillCycle = async (
@@ -954,8 +954,8 @@ export default function App() {
 
     setBoard(workingBoard);
 
-    // Slide animation delay
-    await new Promise((resolve) => setTimeout(resolve, 180));
+    // Slide animation delay - reduced for faster pace
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Check Escorts post-gravity
     const escortsEscaped = processEscorts(workingBoard);
@@ -968,7 +968,7 @@ export default function App() {
 
     if (cascadeMatches.length > 0) {
       playMatchSound(nextCombo);
-      resolveBoardMatches(workingBoard, cascadeMatches, nextCombo);
+      await resolveBoardMatches(workingBoard, cascadeMatches, nextCombo);
     } else {
       // Board fully settled!
       // If chocolates exist and no chocolate cleared this turn, chocolate spreads!
@@ -1083,8 +1083,39 @@ export default function App() {
       let targetColor: CandyColor | null = null;
 
       if (candyA?.type === 'color-bomb' && candyB) {
+        // Color Bomb + Special Candy combination
+        if (candyB.type.includes('striped') || candyB.type === 'wrapped') {
+          // Trigger special effect for all candies of candyB.color
+          const targetColor = candyB.color;
+          const listToClear = [indexA];
+          for (let i = 0; i < 64; i++) {
+            if (workingBoard[i].candy?.color === targetColor) {
+              // Convert candy to Striped or Wrapped based on candyB type
+              workingBoard[i].candy!.type = candyB.type;
+              listToClear.push(i);
+            }
+          }
+          setGameStats((p) => ({ ...p, movesLeft: p.movesLeft - 1 }));
+          resolveBoardMatches(workingBoard, [{ indices: listToClear, color: targetColor, type: 'row' }], 1);
+          return;
+        }
         targetColor = candyB.color;
       } else if (candyB?.type === 'color-bomb' && candyA) {
+        if (candyA.type.includes('striped') || candyA.type === 'wrapped') {
+          // Trigger special effect for all candies of candyA.color
+          const targetColor = candyA.color;
+          const listToClear = [indexB];
+          for (let i = 0; i < 64; i++) {
+            if (workingBoard[i].candy?.color === targetColor) {
+              // Convert candy to Striped or Wrapped based on candyA type
+              workingBoard[i].candy!.type = candyA.type;
+              listToClear.push(i);
+            }
+          }
+          setGameStats((p) => ({ ...p, movesLeft: p.movesLeft - 1 }));
+          resolveBoardMatches(workingBoard, [{ indices: listToClear, color: targetColor, type: 'row' }], 1);
+          return;
+        }
         targetColor = candyA.color;
       } else if (candyA?.type === 'color-bomb' && candyB?.type === 'color-bomb') {
         // Super bomb combo! Vaporize entire board
@@ -1183,10 +1214,12 @@ export default function App() {
       workingBoard[index].obstacle = 'none';
 
       setBoard(workingBoard);
-      setSelectedBooster(null);
-
+      
       await new Promise((resolve) => setTimeout(resolve, 100));
-      cascadeRefillCycle(workingBoard, 1, false);
+      await cascadeRefillCycle(workingBoard, 1, false);
+      
+      setSelectedBooster(null);
+      setIsAnimating(false);
 
     } else if (selectedBooster === 'color-remover') {
       // Clear all items of chosen color
@@ -1199,8 +1232,10 @@ export default function App() {
             clearIndices.push(i);
           }
         }
+        
         setSelectedBooster(null);
-        resolveBoardMatches(workingBoard, [{ indices: clearIndices, color: chosenColor, type: 'row' }], 1.5);
+        await resolveBoardMatches(workingBoard, [{ indices: clearIndices, color: chosenColor, type: 'row' }], 1.5);
+        setIsAnimating(false);
       } else {
         setIsAnimating(false);
         setSelectedBooster(null);
@@ -1210,13 +1245,15 @@ export default function App() {
       // Convert tile to immediate Wrapped Bomb candy
       workingBoard[index].candy = createRandomCandy(undefined, 'wrapped');
       setBoard(workingBoard);
-      setSelectedBooster(null);
-      setIsAnimating(false);
 
       const formedMatches = checkForMatches(workingBoard);
       if (formedMatches.length > 0) {
-        resolveBoardMatches(workingBoard, formedMatches, 1);
+        await resolveBoardMatches(workingBoard, formedMatches, 1);
       }
+      
+      setSelectedBooster(null);
+      setIsAnimating(false);
+      
     } else if (selectedBooster === 'extra-moves') {
       // Add moves/time
       setGameStats((p) => ({

@@ -162,7 +162,7 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
           for (let i = 0; i < matchLength; i++) {
             indices.push(startIndex + i);
           }
-          matches.push({ indices, color: matchColor, type: 'row' });
+          matches.push({ indices, color: matchColor, type: 'row', shape: matchLength >= 5 ? 'row5' : (matchLength === 4 ? 'row4' : undefined) });
         }
         matchColor = canMatch ? candy.color : null;
         matchLength = 1;
@@ -232,6 +232,13 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
         if (overlap.length > 0) {
           const combined = Array.from(new Set([...matchA.indices, ...matchB.indices]));
           
+          // Determine if it's an L, T or Intersection based on index patterns
+          let shape: 'L' | 'T' | undefined;
+          // Simple heuristic: 5 candies in L/T shapes
+          if (combined.length >= 5) {
+            shape = 'T'; // Defaulting to Wrapped for complex intersections
+          }
+
           // Order keys to avoid duplicates
           const key = combined.sort((a,b)=>a-b).join(',');
           if (!processedRowColMap.has(key)) {
@@ -240,6 +247,7 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
               indices: combined,
               color: matchA.color,
               type: 'intersection',
+              shape: shape
             });
           }
           isIntersected = true;
