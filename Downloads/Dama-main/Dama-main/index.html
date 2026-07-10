@@ -16,7 +16,9 @@
     <div id="splash-screen" class="screen active">
         <div class="splash-container">
             <h1 class="splash-title">AXUMIT STUDIOS</h1>
-            <img src="axumite-emblem.png" alt="Axumite Emblem" class="axumite-emblem">
+            <div class="splash-emblem-container">
+                <img src="./assets/image/logo.png" alt="AXUMIT STUDIOS Logo" class="splash-emblem-img" />
+            </div>
             <div class="splash-loader">
                 <div class="loader-bar"></div>
             </div>
@@ -133,30 +135,51 @@
             </div>
         </div>
 
-        <div class="scores-bar">
-            <div class="score-card player1">
-                <div class="score-indicator neon-bg-blue"></div>
-                <div class="score-info">
-                    <span class="score-label">GOLD (YOU)</span>
-                    <span id="p1-score" class="score-value neon-text-blue">12</span>
+        <div class="gameplay-main-content">
+            <div class="game-board-area">
+                <div class="scores-bar">
+                    <div class="score-card player1">
+                        <div class="score-indicator neon-bg-blue"></div>
+                        <div class="score-info">
+                            <span class="score-label">PLAYER (YOU)</span>
+                            <span id="p1-score" class="score-value neon-text-blue">12</span>
+                        </div>
+                    </div>
+                    <div class="score-card player2">
+                        <div class="score-info">
+                            <span id="p2-label" class="score-label">CPU</span>
+                            <span id="p2-score" class="score-value neon-text-pink">12</span>
+                        </div>
+                        <div class="score-indicator neon-bg-pink"></div>
+                    </div>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="game-canvas"></canvas>
+                </div>
+
+                <div class="game-instruction-bar">
+                    <span id="instruction-text">Select your piece to move.</span>
                 </div>
             </div>
-            <div class="score-card player2">
-                <div class="score-info">
-                    <span id="p2-label" class="score-label">GREEN (CPU)</span>
-                    <span id="p2-score" class="score-value neon-text-pink">12</span>
+
+            <div id="move-log-panel" class="move-log-panel">
+                <div class="move-log-header">
+                    <h3>Move Log</h3>
+                    <button id="close-log-btn" class="close-btn" aria-label="Close Move Log">✕</button>
                 </div>
-                <div class="score-indicator neon-bg-pink"></div>
+                <div class="move-log-content" id="move-log-content">
+                    <!-- Logs will be populated here -->
+                </div>
             </div>
         </div>
 
-        <div class="canvas-container">
-            <canvas id="game-canvas"></canvas>
-        </div>
-
-        <div class="game-instruction-bar">
-            <span id="instruction-text">Tap a Gold piece to select it.</span>
-        </div>
+        <!-- Mobile Floating Button -->
+        <button id="mobile-log-btn" class="floating-log-btn" aria-label="Open Move Log">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+                <path d="M4 6H20V8H4zM4 11H20V13H4zM4 16H14V18H4z" fill="currentColor"/>
+            </svg>
+        </button>
     </div>
 
     <!-- ======================== -->
@@ -167,7 +190,7 @@
             <h1 class="gameover-title neon-text-red">GAME OVER</h1>
             
             <div class="result-box">
-                <h2 id="result-message" class="neon-text-blue">GOLD WINS!</h2>
+                <h2 id="result-message" class="neon-text-blue">PLAYER WINS!</h2>
                 <div class="stats-table">
                     <div class="stats-row">
                         <span>Game Duration</span>
