@@ -162,7 +162,7 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
           for (let i = 0; i < matchLength; i++) {
             indices.push(startIndex + i);
           }
-          matches.push({ indices, color: matchColor, type: 'row' });
+          matches.push({ indices, color: matchColor, type: 'row', shape: matchLength >= 5 ? 'row5' : (matchLength === 4 ? 'row4' : undefined) });
         }
         matchColor = canMatch ? candy.color : null;
         matchLength = 1;
@@ -232,6 +232,13 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
         if (overlap.length > 0) {
           const combined = Array.from(new Set([...matchA.indices, ...matchB.indices]));
           
+          // Determine if it's an L, T or Intersection based on index patterns
+          let shape: 'L' | 'T' | undefined;
+          // Simple heuristic: 5 candies in L/T shapes
+          if (combined.length >= 5) {
+            shape = 'T'; // Defaulting to Wrapped for complex intersections
+          }
+
           // Order keys to avoid duplicates
           const key = combined.sort((a,b)=>a-b).join(',');
           if (!processedRowColMap.has(key)) {
@@ -240,6 +247,7 @@ export const checkForMatches = (board: BoardGrid): MatchGroup[] => {
               indices: combined,
               color: matchA.color,
               type: 'intersection',
+              shape: shape
             });
           }
           isIntersected = true;
@@ -279,13 +287,43 @@ export const isValidSwap = (board: BoardGrid, indexA: number, indexB: number): b
   const hasColorBomb = (cellA.candy?.type === 'color-bomb') || (cellB.candy?.type === 'color-bomb');
   if (hasColorBomb) return true;
 
-  // Swap and test with shallow copy of board array and only cloning the two modified cells
-  const testBoard = [...board];
-  testBoard[indexA] = { ...cellA, candy: cellB.candy, isIngredient: cellB.isIngredient };
-  testBoard[indexB] = { ...cellB, candy: cellA.candy, isIngredient: cellA.isIngredient };
+  const colorA = cellA.candy?.color;
+  const colorB = cellB.candy?.color;
 
-  const matches = checkForMatches(testBoard);
-  return matches.length > 0;
+  // Helper to get simulated color after swap
+  const getSimulatedColor = (idx: number): CandyColor | null => {
+    const cell = board[idx];
+    if (!cell || cell.obstacle === 'stone' || cell.isIngredient) return null;
+    if (idx === indexA) return colorB || null;
+    if (idx === indexB) return colorA || null;
+    return cell.candy ? cell.candy.color : null;
+  };
+
+  const checkLocalMatchSimulated = (idx: number, color: CandyColor | null): boolean => {
+    if (!color) return false;
+    const r = Math.floor(idx / 8);
+    const c = idx % 8;
+
+    const getColor = (row: number, col: number): CandyColor | null => {
+      if (row < 0 || row >= 8 || col < 0 || col >= 8) return null;
+      return getSimulatedColor(row * 8 + col);
+    };
+
+    // Horizontal check
+    if (c <= 5 && getColor(r, c + 1) === color && getColor(r, c + 2) === color) return true;
+    if (c >= 1 && c <= 6 && getColor(r, c - 1) === color && getColor(r, c + 1) === color) return true;
+    if (c >= 2 && getColor(r, c - 2) === color && getColor(r, c - 1) === color) return true;
+
+    // Vertical check
+    if (r <= 5 && getColor(r + 1, c) === color && getColor(r + 2, c) === color) return true;
+    if (r >= 1 && r <= 6 && getColor(r - 1, c) === color && getColor(r + 1, c) === color) return true;
+    if (r >= 2 && getColor(r - 2, c) === color && getColor(r - 1, c) === color) return true;
+
+    return false;
+  };
+
+  // The swap is valid if it forms a match at either indexA (with colorB) or indexB (with colorA)
+  return checkLocalMatchSimulated(indexA, colorB) || checkLocalMatchSimulated(indexB, colorA);
 };
 
 /**

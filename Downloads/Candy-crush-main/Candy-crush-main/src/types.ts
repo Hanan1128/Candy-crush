@@ -135,5 +135,6 @@ export interface LeaderboardEntry {
 export interface MatchGroup {
   indices: number[];
   color: CandyColor;
-  type: 'row' | 'col' | 'intersection';
+  type: 'row' | 'col' | 'intersection' | 'line5';
+  shape?: 'L' | 'T' | 'row4' | 'col4' | 'row5' | 'col5';
 }

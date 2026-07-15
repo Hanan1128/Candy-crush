@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import { BoardGrid, CandyColor, CandyType, ObstacleType, JellyType, BoosterType } from '../types';
 import { Sparkles, HelpCircle, AlertCircle, ShieldAlert } from 'lucide-react';
 import { playClickSound } from '../audio';
@@ -13,9 +13,10 @@ interface CandyBoardProps {
   selectedBooster: BoosterType | null;
   onApplyBooster: (index: number) => void;
   hintIndices: [number, number] | null;
+  performanceMode?: boolean;
 }
 
-export const CandyBoard: React.FC<CandyBoardProps> = ({
+export const CandyBoard: React.FC<CandyBoardProps> = React.memo(({
   board,
   selectedIndex,
   onSelect,
@@ -24,6 +25,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   selectedBooster,
   onApplyBooster,
   hintIndices,
+  performanceMode = false,
 }) => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -112,7 +114,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         if (cell.obstacle !== 'locked') {
           onSelect(index);
         } else {
-          onSelect(null);
+          onSelect(index);
         }
       }
     }
@@ -171,34 +173,56 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           className={`w-[82%] h-[82%] relative flex items-center justify-center transition-all duration-300 ${selectedClass}`}
           style={frozenStyles}
         >
-          <motion.div
-            animate={{
-              scale: [1, 1.05, 1],
-              rotate: 360
-            }}
-            transition={{
-              scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
-              rotate: { duration: 18, repeat: Infinity, ease: 'linear' }
-            }}
-            className="w-full h-full relative"
-          >
-            <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.45)]">
-              {/* Outer Energy Glow Ring */}
-              <circle cx="50" cy="50" r="42" fill="none" stroke="url(#bombGlow)" strokeWidth="4.5" opacity="0.85" className="animate-pulse" />
-              {/* Main Sphere */}
-              <circle cx="50" cy="50" r="36" fill="url(#bombBase)" stroke="#4f46e5" strokeWidth="1" />
-              {/* 3D Glass shine dome */}
-              <path d="M 22,35 C 22,23 35,18 50,18 C 40,22 28,30 25,40 Z" fill="white" opacity="0.45" />
-              
-              {/* Shiny Candy Sprinkles */}
-              <path d="M50,28 C50,28 45,23 45,19 C45,16 48,15 50,17 C52,15 55,16 55,19 C55,23 50,28 50,28 Z" fill="#ef4444" transform="rotate(15 50 25)" />
-              <path d="M28,45 C28,45 35,52 35,56 C35,60 31,62 28,62 C25,62 21,60 21,56 C21,52 28,45 28,45 Z" fill="#00f5ff" transform="rotate(-45 28 55)" />
-              <rect x="68" y="42" width="10" height="10" rx="3" fill="#00ff88" transform="rotate(30 73 47)" />
-              <circle cx="68" cy="28" r="4.5" fill="#ffaa00" />
-              <path d="M32,28 C36,22 44,22 48,28 C42,30 38,30 32,28 Z" fill="#d000ff" transform="rotate(45 40 28)" />
-            </svg>
-          </motion.div>
-          <div className="absolute inset-0.5 border border-dashed border-pink-400 rounded-full animate-ping opacity-25 pointer-events-none" />
+          {performanceMode ? (
+            <div className="w-full h-full relative">
+              <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.45)]">
+                {/* Outer Energy Glow Ring */}
+                <circle cx="50" cy="50" r="42" fill="none" stroke="url(#bombGlow)" strokeWidth="4.5" opacity="0.85" />
+                {/* Main Sphere */}
+                <circle cx="50" cy="50" r="36" fill="url(#bombBase)" stroke="#4f46e5" strokeWidth="1" />
+                {/* 3D Glass shine dome */}
+                <path d="M 22,35 C 22,23 35,18 50,18 C 40,22 28,30 25,40 Z" fill="white" opacity="0.45" />
+                
+                {/* Shiny Candy Sprinkles */}
+                <path d="M50,28 C50,28 45,23 45,19 C45,16 48,15 50,17 C52,15 55,16 55,19 C55,23 50,28 50,28 Z" fill="#ef4444" transform="rotate(15 50 25)" />
+                <path d="M28,45 C28,45 35,52 35,56 C35,60 31,62 28,62 C25,62 21,60 21,56 C21,52 28,45 28,45 Z" fill="#00f5ff" transform="rotate(-45 28 55)" />
+                <rect x="68" y="42" width="10" height="10" rx="3" fill="#00ff88" transform="rotate(30 73 47)" />
+                <circle cx="68" cy="28" r="4.5" fill="#ffaa00" />
+                <path d="M32,28 C36,22 44,22 48,28 C42,30 38,30 32,28 Z" fill="#d000ff" transform="rotate(45 40 28)" />
+              </svg>
+            </div>
+          ) : (
+            <motion.div
+              animate={{
+                scale: [1, 1.05, 1],
+                rotate: 360
+              }}
+              transition={{
+                scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+                rotate: { duration: 18, repeat: Infinity, ease: 'linear' }
+              }}
+              className="w-full h-full relative"
+            >
+              <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.45)]">
+                {/* Outer Energy Glow Ring */}
+                <circle cx="50" cy="50" r="42" fill="none" stroke="url(#bombGlow)" strokeWidth="4.5" opacity="0.85" className="animate-pulse" />
+                {/* Main Sphere */}
+                <circle cx="50" cy="50" r="36" fill="url(#bombBase)" stroke="#4f46e5" strokeWidth="1" />
+                {/* 3D Glass shine dome */}
+                <path d="M 22,35 C 22,23 35,18 50,18 C 40,22 28,30 25,40 Z" fill="white" opacity="0.45" />
+                
+                {/* Shiny Candy Sprinkles */}
+                <path d="M50,28 C50,28 45,23 45,19 C45,16 48,15 50,17 C52,15 55,16 55,19 C55,23 50,28 50,28 Z" fill="#ef4444" transform="rotate(15 50 25)" />
+                <path d="M28,45 C28,45 35,52 35,56 C35,60 31,62 28,62 C25,62 21,60 21,56 C21,52 28,45 28,45 Z" fill="#00f5ff" transform="rotate(-45 28 55)" />
+                <rect x="68" y="42" width="10" height="10" rx="3" fill="#00ff88" transform="rotate(30 73 47)" />
+                <circle cx="68" cy="28" r="4.5" fill="#ffaa00" />
+                <path d="M32,28 C36,22 44,22 48,28 C42,30 38,30 32,28 Z" fill="#d000ff" transform="rotate(45 40 28)" />
+              </svg>
+            </motion.div>
+          )}
+          {!performanceMode && (
+            <div className="absolute inset-0.5 border border-dashed border-pink-400 rounded-full animate-ping opacity-25 pointer-events-none" />
+          )}
         </div>
       );
     }
@@ -213,7 +237,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         style={frozenStyles}
       >
         {/* Wrapped candy background wrapper glow */}
-        {isWrapped && (
+        {isWrapped && !performanceMode && (
           <div className="absolute inset-[-4px] z-0 animate-pulse">
             <svg viewBox="0 0 100 100" className="w-full h-full opacity-90">
               {/* Wrapped bows */}
@@ -223,142 +247,242 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           </div>
         )}
 
-        {/* Candy Shape Vector */}
-        <motion.div
-          animate={{
-            y: [0, -3.5, 0],
-            scale: [1, 1.03, 1]
-          }}
-          transition={{
-            duration: idleDuration,
-            repeat: Infinity,
-            ease: 'easeInOut'
-          }}
-          className="w-full h-full relative flex items-center justify-center"
-        >
-          <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.35)] overflow-visible">
+        {/* Candy Shape Vector - completely skip animation hooks on performance mode */}
+        {performanceMode ? (
+          <div className="w-full h-full relative flex items-center justify-center">
+            <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.35)] overflow-visible">
 
-            {/* Render unique vector shape based on color */}
-            {color === 'red' && (
-              <>
-                {/* Strawberry Heart shape */}
-                <path d="M50 82 C50 82 16 54 16 34 C16 19 28 14 42 23 L50 30 L58 23 C72 14 84 19 84 34 C84 54 50 82 50 82 Z" fill="url(#redCandy)" stroke="#730018" strokeWidth="1" />
-                {/* 3D Glossy Reflection */}
-                <path d="M 24,34 C 24,24 31,18 42,22 C 36,26 28,30 26,36 Z" fill="url(#candyShine)" />
-                <circle cx="32" cy="28" r="3.5" fill="white" opacity="0.8" />
-              </>
+              {/* Render unique vector shape based on color */}
+              {color === 'red' && (
+                <>
+                  {/* Strawberry Heart shape */}
+                  <path d="M50 82 C50 82 16 54 16 34 C16 19 28 14 42 23 L50 30 L58 23 C72 14 84 19 84 34 C84 54 50 82 50 82 Z" fill="url(#redCandy)" stroke="#730018" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M 24,34 C 24,24 31,18 42,22 C 36,26 28,30 26,36 Z" fill="url(#candyShine)" />
+                  <circle cx="32" cy="28" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'blue' && (
+                <>
+                  {/* Liquid Sapphire teardrop/pear shape */}
+                  <path d="M50,15 C50,15 82,45 82,65 C82,82 68,90 50,90 C32,90 18,82 18,65 C18,45 50,15 50,15 Z" fill="url(#blueCandy)" stroke="#002d6b" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M30,55 C30,45 38,35 45,28 C42,34 35,45 35,55 C35,60 38,65 42,70 C34,68 30,62 30,55 Z" fill="url(#candyShine)" />
+                  <circle cx="38" cy="38" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'green' && (
+                <>
+                  {/* Glow Emerald pillow cube shape */}
+                  <path d="M25,15 Q50,8 75,15 Q92,50 75,85 Q50,92 25,85 Q8,50 25,15 Z" fill="url(#greenCandy)" stroke="#022c22" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M28,24 Q50,16 72,24 C60,28 40,28 28,24 Z" fill="url(#candyShine)" />
+                  <circle cx="34" cy="28" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'yellow' && (
+                <>
+                  {/* Golden Topaz rounded 4-point star */}
+                  <path d="M50,10 C50,38 62,50 90,50 C62,50 50,62 50,90 C50,62 38,50 10,50 C38,50 50,38 50,10 Z" fill="url(#yellowCandy)" stroke="#713f12" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M38,38 C42,32 46,28 50,22 C48,28 44,32 38,38 Z" fill="url(#candyShine)" />
+                  <circle cx="45" cy="45" r="2.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'orange' && (
+                <>
+                  {/* Juicy Tangerine spheroid */}
+                  <circle cx="50" cy="50" r="38" fill="url(#orangeCandy)" stroke="#7c2d12" strokeWidth="1" />
+                  {/* Slices decoration to look juicy */}
+                  <circle cx="50" cy="50" r="28" fill="none" stroke="white" strokeWidth="1.5" strokeDasharray="4,8" opacity="0.3" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M22,35 C22,23 35,18 50,18 C40,22 28,30 25,40 Z" fill="url(#candyShine)" />
+                  <circle cx="34" cy="28" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'purple' && (
+                <>
+                  {/* Classic Jelly Bean shape */}
+                  <path d="M25,35 C35,20 65,20 75,35 C85,50 80,75 50,80 C25,85 15,60 25,35 Z" fill="url(#purpleCandy)" stroke="#4a044e" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M32,38 C38,28 55,28 62,35 C52,38 42,38 32,38 Z" fill="url(#candyShine)" />
+                  <circle cx="42" cy="30" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {/* Special candy markings overlay */}
+              {isStripedRow && (
+                <g>
+                  <line x1="15" y1="40" x2="85" y2="40" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+                  <line x1="10" y1="50" x2="90" y2="50" stroke="white" strokeWidth="6" strokeLinecap="round" opacity="0.9" />
+                  <line x1="15" y1="60" x2="85" y2="60" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+                </g>
+              )}
+
+              {isStripedCol && (
+                <g>
+                  <line x1="40" y1="15" x2="40" y2="85" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+                  <line x1="50" y1="10" x2="50" y2="90" stroke="white" strokeWidth="6" strokeLinecap="round" opacity="0.9" />
+                  <line x1="60" y1="15" x2="60" y2="85" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+                </g>
+              )}
+
+            </svg>
+
+            {/* Bomb Timer Lit Fuse Badge */}
+            {bombTimer !== undefined && (
+              <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center border border-red-500 shadow-md">
+                <span className="text-[10px] font-mono font-black text-red-500 leading-none">
+                  BOMB
+                </span>
+                <span className="text-sm font-mono font-black text-yellow-400">
+                  {bombTimer}
+                </span>
+              </div>
             )}
+          </div>
+        ) : (
+          <motion.div
+            animate={{
+              y: [0, -3.5, 0],
+              scale: [1, 1.03, 1]
+            }}
+            transition={{
+              duration: idleDuration,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+            className="w-full h-full relative flex items-center justify-center"
+          >
+            <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.35)] overflow-visible">
 
-            {color === 'blue' && (
-              <>
-                {/* Liquid Sapphire teardrop/pear shape */}
-                <path d="M50,15 C50,15 82,45 82,65 C82,82 68,90 50,90 C32,90 18,82 18,65 C18,45 50,15 50,15 Z" fill="url(#blueCandy)" stroke="#002d6b" strokeWidth="1" />
-                {/* 3D Glossy Reflection */}
-                <path d="M30,55 C30,45 38,35 45,28 C42,34 35,45 35,55 C35,60 38,65 42,70 C34,68 30,62 30,55 Z" fill="url(#candyShine)" />
-                <circle cx="38" cy="38" r="3.5" fill="white" opacity="0.8" />
-              </>
+              {/* Render unique vector shape based on color */}
+              {color === 'red' && (
+                <>
+                  {/* Strawberry Heart shape */}
+                  <path d="M50 82 C50 82 16 54 16 34 C16 19 28 14 42 23 L50 30 L58 23 C72 14 84 19 84 34 C84 54 50 82 50 82 Z" fill="url(#redCandy)" stroke="#730018" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M 24,34 C 24,24 31,18 42,22 C 36,26 28,30 26,36 Z" fill="url(#candyShine)" />
+                  <circle cx="32" cy="28" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'blue' && (
+                <>
+                  {/* Liquid Sapphire teardrop/pear shape */}
+                  <path d="M50,15 C50,15 82,45 82,65 C82,82 68,90 50,90 C32,90 18,82 18,65 C18,45 50,15 50,15 Z" fill="url(#blueCandy)" stroke="#002d6b" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M30,55 C30,45 38,35 45,28 C42,34 35,45 35,55 C35,60 38,65 42,70 C34,68 30,62 30,55 Z" fill="url(#candyShine)" />
+                  <circle cx="38" cy="38" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'green' && (
+                <>
+                  {/* Glow Emerald pillow cube shape */}
+                  <path d="M25,15 Q50,8 75,15 Q92,50 75,85 Q50,92 25,85 Q8,50 25,15 Z" fill="url(#greenCandy)" stroke="#022c22" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M28,24 Q50,16 72,24 C60,28 40,28 28,24 Z" fill="url(#candyShine)" />
+                  <circle cx="34" cy="28" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'yellow' && (
+                <>
+                  {/* Golden Topaz rounded 4-point star */}
+                  <path d="M50,10 C50,38 62,50 90,50 C62,50 50,62 50,90 C50,62 38,50 10,50 C38,50 50,38 50,10 Z" fill="url(#yellowCandy)" stroke="#713f12" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M38,38 C42,32 46,28 50,22 C48,28 44,32 38,38 Z" fill="url(#candyShine)" />
+                  <circle cx="45" cy="45" r="2.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'orange' && (
+                <>
+                  {/* Juicy Tangerine spheroid */}
+                  <circle cx="50" cy="50" r="38" fill="url(#orangeCandy)" stroke="#7c2d12" strokeWidth="1" />
+                  {/* Slices decoration to look juicy */}
+                  <circle cx="50" cy="50" r="28" fill="none" stroke="white" strokeWidth="1.5" strokeDasharray="4,8" opacity="0.3" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M22,35 C22,23 35,18 50,18 C40,22 28,30 25,40 Z" fill="url(#candyShine)" />
+                  <circle cx="34" cy="28" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {color === 'purple' && (
+                <>
+                  {/* Classic Jelly Bean shape */}
+                  <path d="M25,35 C35,20 65,20 75,35 C85,50 80,75 50,80 C25,85 15,60 25,35 Z" fill="url(#purpleCandy)" stroke="#4a044e" strokeWidth="1" />
+                  {/* 3D Glossy Reflection */}
+                  <path d="M32,38 C38,28 55,28 62,35 C52,38 42,38 32,38 Z" fill="url(#candyShine)" />
+                  <circle cx="42" cy="30" r="3.5" fill="white" opacity="0.8" />
+                </>
+              )}
+
+              {/* Special candy markings overlay */}
+              {isStripedRow && (
+                <g className="animate-pulse">
+                  <line x1="15" y1="40" x2="85" y2="40" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+                  <line x1="10" y1="50" x2="90" y2="50" stroke="white" strokeWidth="6" strokeLinecap="round" opacity="0.9" />
+                  <line x1="15" y1="60" x2="85" y2="60" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+                </g>
+              )}
+
+              {isStripedCol && (
+                <g className="animate-pulse">
+                  <line x1="40" y1="15" x2="40" y2="85" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+                  <line x1="50" y1="10" x2="50" y2="90" stroke="white" strokeWidth="6" strokeLinecap="round" opacity="0.9" />
+                  <line x1="60" y1="15" x2="60" y2="85" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+                </g>
+              )}
+
+              {/* Sparkle Twinkle element */}
+              <motion.path
+                d="M 50,50 L 52,55 L 57,57 L 52,59 L 50,64 L 48,59 L 43,57 L 48,55 Z"
+                fill="white"
+                animate={{
+                  scale: [0, 1, 0],
+                  opacity: [0, 0.9, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: sparkleDelay,
+                  ease: 'easeInOut'
+                }}
+                style={{ originX: '50px', originY: '57px' }}
+              />
+
+            </svg>
+
+            {/* Bomb Timer Lit Fuse Badge */}
+            {bombTimer !== undefined && (
+              <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center border border-red-500 shadow-md">
+                <span className="text-[10px] font-mono font-black text-red-500 animate-pulse leading-none">
+                  BOMB
+                </span>
+                <span className={`text-sm font-mono font-black ${bombTimer <= 3 ? 'text-red-500 animate-ping' : 'text-yellow-400'}`}>
+                  {bombTimer}
+                </span>
+              </div>
             )}
-
-            {color === 'green' && (
-              <>
-                {/* Glow Emerald pillow cube shape */}
-                <path d="M25,15 Q50,8 75,15 Q92,50 75,85 Q50,92 25,85 Q8,50 25,15 Z" fill="url(#greenCandy)" stroke="#022c22" strokeWidth="1" />
-                {/* 3D Glossy Reflection */}
-                <path d="M28,24 Q50,16 72,24 C60,28 40,28 28,24 Z" fill="url(#candyShine)" />
-                <circle cx="34" cy="28" r="3.5" fill="white" opacity="0.8" />
-              </>
-            )}
-
-            {color === 'yellow' && (
-              <>
-                {/* Golden Topaz rounded 4-point star */}
-                <path d="M50,10 C50,38 62,50 90,50 C62,50 50,62 50,90 C50,62 38,50 10,50 C38,50 50,38 50,10 Z" fill="url(#yellowCandy)" stroke="#713f12" strokeWidth="1" />
-                {/* 3D Glossy Reflection */}
-                <path d="M38,38 C42,32 46,28 50,22 C48,28 44,32 38,38 Z" fill="url(#candyShine)" />
-                <circle cx="45" cy="45" r="2.5" fill="white" opacity="0.8" />
-              </>
-            )}
-
-            {color === 'orange' && (
-              <>
-                {/* Juicy Tangerine spheroid */}
-                <circle cx="50" cy="50" r="38" fill="url(#orangeCandy)" stroke="#7c2d12" strokeWidth="1" />
-                {/* Slices decoration to look juicy */}
-                <circle cx="50" cy="50" r="28" fill="none" stroke="white" strokeWidth="1.5" strokeDasharray="4,8" opacity="0.3" />
-                {/* 3D Glossy Reflection */}
-                <path d="M22,35 C22,23 35,18 50,18 C40,22 28,30 25,40 Z" fill="url(#candyShine)" />
-                <circle cx="34" cy="28" r="3.5" fill="white" opacity="0.8" />
-              </>
-            )}
-
-            {color === 'purple' && (
-              <>
-                {/* Classic Jelly Bean shape */}
-                <path d="M25,35 C35,20 65,20 75,35 C85,50 80,75 50,80 C25,85 15,60 25,35 Z" fill="url(#purpleCandy)" stroke="#4a044e" strokeWidth="1" />
-                {/* 3D Glossy Reflection */}
-                <path d="M32,38 C38,28 55,28 62,35 C52,38 42,38 32,38 Z" fill="url(#candyShine)" />
-                <circle cx="42" cy="30" r="3.5" fill="white" opacity="0.8" />
-              </>
-            )}
-
-            {/* Special candy markings overlay */}
-            {isStripedRow && (
-              <g className="animate-pulse">
-                <line x1="15" y1="40" x2="85" y2="40" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
-                <line x1="10" y1="50" x2="90" y2="50" stroke="white" strokeWidth="6" strokeLinecap="round" opacity="0.9" />
-                <line x1="15" y1="60" x2="85" y2="60" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
-              </g>
-            )}
-
-            {isStripedCol && (
-              <g className="animate-pulse">
-                <line x1="40" y1="15" x2="40" y2="85" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
-                <line x1="50" y1="10" x2="50" y2="90" stroke="white" strokeWidth="6" strokeLinecap="round" opacity="0.9" />
-                <line x1="60" y1="15" x2="60" y2="85" stroke="white" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
-              </g>
-            )}
-
-            {/* Sparkle Twinkle element */}
-            <motion.path
-              d="M 50,50 L 52,55 L 57,57 L 52,59 L 50,64 L 48,59 L 43,57 L 48,55 Z"
-              fill="white"
-              animate={{
-                scale: [0, 1, 0],
-                opacity: [0, 0.9, 0],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatDelay: sparkleDelay,
-                ease: 'easeInOut'
-              }}
-              style={{ originX: '50px', originY: '57px' }}
-            />
-
-          </svg>
-
-          {/* Bomb Timer Lit Fuse Badge */}
-          {bombTimer !== undefined && (
-            <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center border border-red-500 shadow-md">
-              <span className="text-[10px] font-mono font-black text-red-500 animate-pulse leading-none">
-                BOMB
-              </span>
-              <span className={`text-sm font-mono font-black ${bombTimer <= 3 ? 'text-red-500 animate-ping' : 'text-yellow-400'}`}>
-                {bombTimer}
-              </span>
-            </div>
-          )}
-
-        </motion.div>
+          </motion.div>
+        )}
       </div>
     );
   };
 
   return (
-    <div 
-      id="candy-board"
-      className="grid grid-cols-8 gap-0.5 sm:gap-1 p-1 sm:p-1.5 bg-slate-900/95 border-2 sm:border-4 border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-[0_15px_30px_rgba(0,0,0,0.6)] w-full h-full max-w-[min(100%,560px)] max-h-[min(100%,560px)] aspect-square select-none touch-none relative"
-    >
+    <LayoutGroup id="candy-board-layout-group">
+      <div 
+        id="candy-board"
+        className="grid grid-cols-8 gap-0.5 sm:gap-1 p-1 sm:p-1.5 bg-slate-900/95 border-2 sm:border-4 border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-[0_15px_30px_rgba(0,0,0,0.6)] w-full h-full max-w-[min(100%,560px)] max-h-[min(100%,560px)] aspect-square select-none touch-none relative"
+      >
       {/* Global SVG gradients definition to avoid duplicates, shrinking DOM and increasing render speed by 10x */}
       <svg width="0" height="0" className="absolute pointer-events-none" style={{ position: 'absolute', width: 0, height: 0 }}>
         <defs>
@@ -487,75 +611,128 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           >
             {/* JELLY LAYER TEXTURE */}
             {hasJelly && (
-              <div className="absolute inset-0 pointer-events-none opacity-40 mix-blend-screen bg-[radial-gradient(circle_at_center,_#22d3ee_10%,_transparent_60%)] animate-pulse" />
+              <div className={`absolute inset-0 pointer-events-none opacity-40 mix-blend-screen bg-[radial-gradient(circle_at_center,_#22d3ee_10%,_transparent_60%)] ${performanceMode ? '' : 'animate-pulse'}`} />
             )}
 
             {/* CANDY CONTENT */}
             {cell.candy && (
-              <motion.div
-                id={`candy-item-${cell.candy.id}`}
-                draggable={!isAnimating && cell.obstacle !== 'locked' && cell.obstacle !== 'stone'}
-                onDragStart={(e) => handleDragStart(e, index)}
-                onDragEnd={handleDragEnd}
-                onClick={() => handleCellClick(index)}
-                className="absolute inset-0 flex items-center justify-center z-10"
-                initial={{ scale: 0, y: -60, opacity: 0 }}
-                animate={{ scale: 1, y: 0, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0, transition: { duration: 0.15 } }}
-                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                layoutId={`candy-layout-${cell.candy.id}`}
-              >
-                {renderCandySVG(cell.candy.color, cell.candy.type, isSelected, cell.candy.bombTimer, cell.obstacle.startsWith('ice'))}
-              </motion.div>
+              performanceMode ? (
+                <div
+                  id={`candy-item-${cell.candy.id}`}
+                  draggable={!isAnimating && cell.obstacle !== 'locked' && cell.obstacle !== 'stone'}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => handleCellClick(index)}
+                  className="absolute inset-0 flex items-center justify-center z-10"
+                >
+                  {renderCandySVG(cell.candy.color, cell.candy.type, isSelected, cell.candy.bombTimer, cell.obstacle === 'ice1' || cell.obstacle === 'ice2')}
+                </div>
+              ) : (
+                <motion.div
+                  id={`candy-item-${cell.candy.id}`}
+                  draggable={!isAnimating && cell.obstacle !== 'locked' && cell.obstacle !== 'stone'}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => handleCellClick(index)}
+                  className="absolute inset-0 flex items-center justify-center z-10"
+                  style={{ willChange: 'transform' }}
+                  initial={{ scale: 0.3, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0, transition: { duration: 0.05 } }}
+                  transition={{ type: 'spring', stiffness: 800, damping: 35 }}
+                  layout="position"
+                  layoutId={`candy-layout-${cell.candy.id}`}
+                >
+                  {renderCandySVG(cell.candy.color, cell.candy.type, isSelected, cell.candy.bombTimer, cell.obstacle === 'ice1' || cell.obstacle === 'ice2')}
+                </motion.div>
+              )
             )}
 
             {/* CHERRY/HAZELNUT INGREDIENT CONTENT */}
             {cell.isIngredient && (
-              <motion.div
-                draggable={!isAnimating}
-                onDragStart={(e) => handleDragStart(e, index)}
-                onDragEnd={handleDragEnd}
-                onClick={() => handleCellClick(index)}
-                className="absolute inset-0 flex items-center justify-center z-10"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                layoutId="ingredient-layout"
-              >
-                {renderIngredient(isSelected)}
-              </motion.div>
+              performanceMode ? (
+                <div
+                  draggable={!isAnimating}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => handleCellClick(index)}
+                  className="absolute inset-0 flex items-center justify-center z-10"
+                >
+                  {renderIngredient(isSelected)}
+                </div>
+              ) : (
+                <motion.div
+                  draggable={!isAnimating}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => handleCellClick(index)}
+                  className="absolute inset-0 flex items-center justify-center z-10"
+                  style={{ willChange: 'transform' }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  layoutId="ingredient-layout"
+                >
+                  {renderIngredient(isSelected)}
+                </motion.div>
+              )
             )}
 
             {/* OBSTACLE LAYER FOREGROUNDS */}
 
             {/* ICE OBSTACLE OVERLAYS */}
-            {cell.obstacle.startsWith('ice') && (
-              <motion.div 
-                className="absolute inset-0 bg-blue-100/50 backdrop-blur-[1px] border border-cyan-200/50 rounded-xl z-20 flex items-center justify-center pointer-events-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={{
-                  boxShadow: 'inset 0 0 10px rgba(186,230,253,0.8)',
-                  backgroundImage: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.7) 10%, transparent 60%)',
-                }}
-              >
-                <span className="text-[10px] font-mono font-black text-cyan-800 drop-shadow-md">
-                  {cell.obstacle === 'ice2' ? '❄️❄️' : '❄️'}
-                </span>
-              </motion.div>
+            {(cell.obstacle === 'ice1' || cell.obstacle === 'ice2') && (
+              performanceMode ? (
+                <div 
+                  className="absolute inset-0 bg-blue-100/50 border border-cyan-200/50 rounded-xl z-20 flex items-center justify-center pointer-events-none"
+                  style={{
+                    boxShadow: 'inset 0 0 10px rgba(186,230,253,0.8)',
+                    backgroundImage: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.7) 10%, transparent 60%)',
+                  }}
+                >
+                  <span className="text-[10px] font-mono font-black text-cyan-800 drop-shadow-md">
+                    {cell.obstacle === 'ice2' ? '❄️❄️' : '❄️'}
+                  </span>
+                </div>
+              ) : (
+                <motion.div 
+                  className="absolute inset-0 bg-blue-100/50 backdrop-blur-[1px] border border-cyan-200/50 rounded-xl z-20 flex items-center justify-center pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{
+                    boxShadow: 'inset 0 0 10px rgba(186,230,253,0.8)',
+                    backgroundImage: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.7) 10%, transparent 60%)',
+                  }}
+                >
+                  <span className="text-[10px] font-mono font-black text-cyan-800 drop-shadow-md">
+                    {cell.obstacle === 'ice2' ? '❄️❄️' : '❄️'}
+                  </span>
+                </motion.div>
+              )
             )}
 
             {/* CHOCOLATE BLOCKS (Fills entirely, no candy visible) */}
             {cell.obstacle === 'chocolate' && (
-              <motion.div
-                onClick={() => handleCellClick(index)}
-                className="absolute inset-0.5 bg-gradient-to-tr from-amber-950 to-amber-800 border-2 border-amber-700 rounded-xl z-20 flex flex-col items-center justify-center shadow-lg cursor-pointer"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="w-4.5 h-4.5 bg-amber-900 border border-amber-600 rounded flex items-center justify-center text-[7px] text-amber-300 font-bold">
-                  CHO
+              performanceMode ? (
+                <div
+                  onClick={() => handleCellClick(index)}
+                  className="absolute inset-0.5 bg-gradient-to-tr from-amber-950 to-amber-800 border-2 border-amber-700 rounded-xl z-20 flex flex-col items-center justify-center shadow-lg cursor-pointer"
+                >
+                  <div className="w-4.5 h-4.5 bg-amber-900 border border-amber-600 rounded flex items-center justify-center text-[7px] text-amber-300 font-bold">
+                    CHO
+                  </div>
                 </div>
-              </motion.div>
+              ) : (
+                <motion.div
+                  onClick={() => handleCellClick(index)}
+                  className="absolute inset-0.5 bg-gradient-to-tr from-amber-950 to-amber-800 border-2 border-amber-700 rounded-xl z-20 flex flex-col items-center justify-center shadow-lg cursor-pointer"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <div className="w-4.5 h-4.5 bg-amber-900 border border-amber-600 rounded flex items-center justify-center text-[7px] text-amber-300 font-bold">
+                    CHO
+                  </div>
+                </motion.div>
+              )
             )}
 
             {/* STONE BLOCKS (Rigid unbreakable grey rocks) */}
@@ -580,13 +757,13 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
             {/* HINT SUGGESTION GLOWING LOOP */}
             {isHinting && (
-              <div className="absolute inset-0.5 border-2 border-yellow-400 rounded-xl z-30 pointer-events-none animate-pulse shadow-[0_0_12px_#facc15]" />
+              <div className={`absolute inset-0.5 border-2 border-yellow-400 rounded-xl z-30 pointer-events-none shadow-[0_0_12px_#facc15] ${performanceMode ? '' : 'animate-pulse'}`} />
             )}
 
             {/* TARGETING RETICLE FOR ACTIVED BOOSTER CHOSEN */}
             {selectedBooster && (
               <div className="absolute inset-0 hover:bg-purple-500/20 z-40 cursor-crosshair flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-purple-400 border-dashed rounded-full animate-spin" />
+                <div className={`w-5 h-5 border-2 border-purple-400 border-dashed rounded-full ${performanceMode ? '' : 'animate-spin'}`} />
               </div>
             )}
 
@@ -594,6 +771,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         );
       })}
 
-    </div>
+      </div>
+    </LayoutGroup>
   );
-};
+});

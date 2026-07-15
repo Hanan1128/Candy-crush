@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Candy, 
@@ -110,6 +110,13 @@ export default function App() {
   // Navigation
   const [currentView, setCurrentView] = useState<ActiveView>('home');
   const [showSplash, setShowSplash] = useState(true);
+  const [performanceMode, setPerformanceMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+      return isMobile;
+    }
+    return false;
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -199,14 +206,14 @@ export default function App() {
           continue;
         }
 
-        currentCtx.save();
-        currentCtx.globalAlpha = p.life;
+        currentCtx.globalAlpha = Math.max(0, Math.min(1, p.life));
         currentCtx.beginPath();
         currentCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         currentCtx.fillStyle = p.color;
         currentCtx.fill();
-        currentCtx.restore();
       }
+
+      currentCtx.globalAlpha = 1.0;
 
       requestAnimationFrame(tick);
     };
@@ -274,7 +281,7 @@ export default function App() {
             });
 
             const isLevel1 = selectedLevel.levelNumber === 1;
-            const canComplete = isLevel1 ? reachedTargetScore : (reachedTargetScore && objectivesCompleted);
+            const canComplete = reachedTargetScore;
 
             if (canComplete || hasClearedCurrentSession) {
               setTimeout(() => {
@@ -327,7 +334,7 @@ export default function App() {
     });
 
     const isLevel1 = selectedLevel.levelNumber === 1;
-    const canComplete = isLevel1 ? reachedTargetScore : (reachedTargetScore && objectivesCompleted);
+    const canComplete = reachedTargetScore;
 
     if (canComplete) {
       setHasClearedCurrentSession(true);
@@ -569,9 +576,10 @@ export default function App() {
     else if (color === 'stone') pColor = '#64748b';
     else pColor = COLOR_HEX[color] || '#ff007f';
 
-    for (let k = 0; k < 12; k++) {
+    const maxParticles = performanceMode ? 4 : 12;
+    for (let k = 0; k < maxParticles; k++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 1.5 + Math.random() * 5;
+      const speed = performanceMode ? 1.0 + Math.random() * 3 : 1.5 + Math.random() * 5;
       particlesRef.current.push({
         id: generateId(),
         x,
@@ -580,7 +588,7 @@ export default function App() {
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - 1.2,
         life: 0.9,
-        size: 2.5 + Math.random() * 4,
+        size: performanceMode ? 2.0 + Math.random() * 2.5 : 2.5 + Math.random() * 4,
       });
     }
     startTickIfNeeded();
@@ -640,7 +648,7 @@ export default function App() {
       } else {
         setShowLevelClear(false);
         setHasClearedCurrentSession(false);
-        setCurrentView('map');
+        setCurrentView('home');
         stopBgmLoop();
       }
     }, 150);
@@ -806,12 +814,12 @@ export default function App() {
 
       // Spawn Specials
       const spawnIdx = m.indices[Math.floor(size / 2)];
-      if (size >= 5) {
+      if (m.shape === 'row5' || m.shape === 'col5' || size >= 5 && m.type !== 'intersection') {
         specialSpawns.push({ index: spawnIdx, color: m.color, type: 'color-bomb' });
       } else if (size === 4) {
         const type: CandyType = m.type === 'row' ? 'striped-col' : 'striped-row';
         specialSpawns.push({ index: spawnIdx, color: m.color, type });
-      } else if (m.type === 'intersection') {
+      } else if (m.type === 'intersection' || m.shape === 'T' || m.shape === 'L') {
         specialSpawns.push({ index: spawnIdx, color: m.color, type: 'wrapped' });
       }
     });
@@ -898,10 +906,10 @@ export default function App() {
     }));
 
     // Delay briefly to show match pop
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Cascade refill gravity fall
-    cascadeRefillCycle(workingBoard, comboMultiplier + 1, chocolateCleared);
+    await cascadeRefillCycle(workingBoard, comboMultiplier + 1, chocolateCleared);
   };
 
   const cascadeRefillCycle = async (
@@ -946,8 +954,8 @@ export default function App() {
 
     setBoard(workingBoard);
 
-    // Slide animation delay
-    await new Promise((resolve) => setTimeout(resolve, 380));
+    // Slide animation delay - reduced for faster pace
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Check Escorts post-gravity
     const escortsEscaped = processEscorts(workingBoard);
@@ -960,7 +968,7 @@ export default function App() {
 
     if (cascadeMatches.length > 0) {
       playMatchSound(nextCombo);
-      resolveBoardMatches(workingBoard, cascadeMatches, nextCombo);
+      await resolveBoardMatches(workingBoard, cascadeMatches, nextCombo);
     } else {
       // Board fully settled!
       // If chocolates exist and no chocolate cleared this turn, chocolate spreads!
@@ -988,7 +996,7 @@ export default function App() {
     });
 
     const isLevel1 = selectedLevel.levelNumber === 1;
-    const canComplete = isLevel1 ? reachedTargetScore : (reachedTargetScore && objectivesCompleted);
+    const canComplete = reachedTargetScore;
 
     // Check Failures or Success when Moves/Time are depleted
     const isMovesDepleted = selectedLevel.mode !== 'timed' && gameStats.movesLeft <= 0;
@@ -1040,7 +1048,7 @@ export default function App() {
   };
 
   // Perform adjacent swappings
-  const handleSwap = async (indexA: number, indexB: number) => {
+  const handleSwap = useCallback(async (indexA: number, indexB: number) => {
     setIsAnimating(true);
     setSelectedIndex(null);
 
@@ -1066,7 +1074,7 @@ export default function App() {
     setBoard(workingBoard);
     playSwapSound();
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 120));
 
     // Color Bomb combinatorics checks
     const hasColorBomb = (candyA?.type === 'color-bomb') || (candyB?.type === 'color-bomb');
@@ -1074,11 +1082,7 @@ export default function App() {
     if (hasColorBomb && selectedLevel) {
       let targetColor: CandyColor | null = null;
 
-      if (candyA?.type === 'color-bomb' && candyB) {
-        targetColor = candyB.color;
-      } else if (candyB?.type === 'color-bomb' && candyA) {
-        targetColor = candyA.color;
-      } else if (candyA?.type === 'color-bomb' && candyB?.type === 'color-bomb') {
+      if (candyA?.type === 'color-bomb' && candyB?.type === 'color-bomb') {
         // Super bomb combo! Vaporize entire board
         triggerAlert("SUPER BOMB COMBO!");
         playMatchSound(3);
@@ -1087,6 +1091,41 @@ export default function App() {
         setGameStats((p) => ({ ...p, movesLeft: p.movesLeft - 1 }));
         resolveBoardMatches(workingBoard, [{ indices: allInList, color: 'red', type: 'row' }], 2);
         return;
+      } else if (candyA?.type === 'color-bomb' && candyB) {
+        // Color Bomb + Special Candy combination
+        if (candyB.type.includes('striped') || candyB.type === 'wrapped') {
+          // Trigger special effect for all candies of candyB.color
+          const targetColor = candyB.color;
+          const listToClear = [indexA];
+          for (let i = 0; i < 64; i++) {
+            if (workingBoard[i].candy?.color === targetColor) {
+              // Convert candy to Striped or Wrapped based on candyB type
+              workingBoard[i].candy!.type = candyB.type;
+              listToClear.push(i);
+            }
+          }
+          setGameStats((p) => ({ ...p, movesLeft: p.movesLeft - 1 }));
+          resolveBoardMatches(workingBoard, [{ indices: listToClear, color: targetColor, type: 'row' }], 1);
+          return;
+        }
+        targetColor = candyB.color;
+      } else if (candyB?.type === 'color-bomb' && candyA) {
+        if (candyA.type.includes('striped') || candyA.type === 'wrapped') {
+          // Trigger special effect for all candies of candyA.color
+          const targetColor = candyA.color;
+          const listToClear = [indexB];
+          for (let i = 0; i < 64; i++) {
+            if (workingBoard[i].candy?.color === targetColor) {
+              // Convert candy to Striped or Wrapped based on candyA type
+              workingBoard[i].candy!.type = candyA.type;
+              listToClear.push(i);
+            }
+          }
+          setGameStats((p) => ({ ...p, movesLeft: p.movesLeft - 1 }));
+          resolveBoardMatches(workingBoard, [{ indices: listToClear, color: targetColor, type: 'row' }], 1);
+          return;
+        }
+        targetColor = candyA.color;
       }
 
       if (targetColor) {
@@ -1144,20 +1183,10 @@ export default function App() {
       playSwapSound();
       setIsAnimating(false);
     }
-  };
-
-  const handleCellSelect = (index: number) => {
-    if (isAnimating) return;
-    if (selectedBooster) {
-      handleApplyBoosterOnCell(index);
-    } else {
-      setSelectedIndex(index);
-      playClickSound();
-    }
-  };
+  }, [board, selectedLevel, resolveBoardMatches, triggerAlert]);
 
   // Booster deployment triggers
-  const handleApplyBoosterOnCell = async (index: number) => {
+  const handleApplyBoosterOnCell = useCallback(async (index: number) => {
     if (!selectedBooster || !selectedLevel) return;
 
     setIsAnimating(true);
@@ -1185,10 +1214,12 @@ export default function App() {
       workingBoard[index].obstacle = 'none';
 
       setBoard(workingBoard);
+      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await cascadeRefillCycle(workingBoard, 1, false);
+      
       setSelectedBooster(null);
-
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      cascadeRefillCycle(workingBoard, 1, false);
+      setIsAnimating(false);
 
     } else if (selectedBooster === 'color-remover') {
       // Clear all items of chosen color
@@ -1201,8 +1232,10 @@ export default function App() {
             clearIndices.push(i);
           }
         }
+        
         setSelectedBooster(null);
-        resolveBoardMatches(workingBoard, [{ indices: clearIndices, color: chosenColor, type: 'row' }], 1.5);
+        await resolveBoardMatches(workingBoard, [{ indices: clearIndices, color: chosenColor, type: 'row' }], 1.5);
+        setIsAnimating(false);
       } else {
         setIsAnimating(false);
         setSelectedBooster(null);
@@ -1212,13 +1245,15 @@ export default function App() {
       // Convert tile to immediate Wrapped Bomb candy
       workingBoard[index].candy = createRandomCandy(undefined, 'wrapped');
       setBoard(workingBoard);
-      setSelectedBooster(null);
-      setIsAnimating(false);
 
       const formedMatches = checkForMatches(workingBoard);
       if (formedMatches.length > 0) {
-        resolveBoardMatches(workingBoard, formedMatches, 1);
+        await resolveBoardMatches(workingBoard, formedMatches, 1);
       }
+      
+      setSelectedBooster(null);
+      setIsAnimating(false);
+      
     } else if (selectedBooster === 'extra-moves') {
       // Add moves/time
       setGameStats((p) => ({
@@ -1230,7 +1265,17 @@ export default function App() {
       setIsAnimating(false);
       triggerAlert("+5 Extra Moves Awarded!");
     }
-  };
+  }, [selectedBooster, selectedLevel, board, progress, handleUpdateProgress, spawnParticles, cascadeRefillCycle, resolveBoardMatches, triggerAlert]);
+
+  const handleCellSelect = useCallback((index: number) => {
+    if (isAnimating) return;
+    if (selectedBooster) {
+      handleApplyBoosterOnCell(index);
+    } else {
+      setSelectedIndex(index);
+      playClickSound();
+    }
+  }, [isAnimating, selectedBooster, handleApplyBoosterOnCell]);
 
   const handleShuffleBoosterFromPanel = () => {
     if (isAnimating) return;
@@ -1276,7 +1321,7 @@ export default function App() {
     return obj.current >= obj.target;
   }) : false;
   const isLevel1 = selectedLevel?.levelNumber === 1;
-  const isLevelCompleted = selectedLevel ? (isLevel1 ? reachedTargetScore : (reachedTargetScore && objectivesCompleted)) : false;
+  const isLevelCompleted = selectedLevel ? reachedTargetScore : false;
 
   return (
     <div className="fixed inset-0 w-full h-full bg-slate-950 text-white flex flex-col items-center overflow-hidden select-none">
@@ -1344,7 +1389,14 @@ export default function App() {
           {currentView === 'home' && (
         <HomeScreen
           progress={progress}
-          onStartGame={() => { playClickSound(); setCurrentView('map'); }}
+          onStartGame={() => {
+            playClickSound();
+            const currentLevelNum = progress.levelsUnlocked || 1;
+            const targetLevel = LEVEL_PRESETS.some(l => l.levelNumber === currentLevelNum) 
+              ? currentLevelNum 
+              : LEVEL_PRESETS[LEVEL_PRESETS.length - 1].levelNumber;
+            handleLaunchLevel(targetLevel);
+          }}
           onUpdateProgress={handleUpdateProgress}
           achievements={achievements}
           leaderboard={leaderboard}
@@ -1381,7 +1433,7 @@ export default function App() {
               currentScore={gameStats.score}
               highScore={progress.highScores[selectedLevel.levelNumber] || 0}
               onPauseToggle={() => { playClickSound(); setIsPaused(true); }}
-              onMapClick={() => { playClickSound(); if (!showLevelClear && !hasClearedCurrentSession) { deductLife(); } setCurrentView('map'); stopBgmLoop(); }}
+              onMapClick={() => { playClickSound(); if (!showLevelClear && !hasClearedCurrentSession) { deductLife(); } setCurrentView('home'); stopBgmLoop(); }}
               onHelpClick={() => { playClickSound(); setShowRules(true); }}
               onRefreshClick={() => handleLaunchLevel(selectedLevel.levelNumber)}
               lives={progress.lives}
@@ -1400,6 +1452,7 @@ export default function App() {
                 selectedBooster={selectedBooster}
                 onApplyBooster={handleApplyBoosterOnCell}
                 hintIndices={hintIndices}
+                performanceMode={performanceMode}
               />
 
               {/* Sparkle effects canvas layer */}
@@ -1469,6 +1522,27 @@ export default function App() {
               <h2 className="text-3xl font-sans font-black tracking-tight mb-2">GAME PAUSED</h2>
               <p className="text-xs text-slate-400 mb-6">Take a quick breath, then jump back into the sweet combos!</p>
 
+              {/* Performance Mode / Battery Saver Settings */}
+              <div className="bg-slate-950/60 p-4 border border-slate-800 rounded-2xl mb-5 space-y-2 text-left">
+                <span className="font-bold text-[10px] text-indigo-400 block tracking-wider uppercase font-mono">GAME SETTINGS</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-col">
+                    <span className="text-[11px] text-slate-300 font-semibold">Performance Mode</span>
+                    <span className="text-[9px] text-slate-500">Smoother cascading & less battery drainage</span>
+                  </div>
+                  <button
+                    onClick={() => { playClickSound(); setPerformanceMode(!performanceMode); }}
+                    className={`px-2.5 py-1 rounded-full text-[9px] font-sans font-black tracking-wider transition-all border ${
+                      performanceMode 
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                        : 'bg-slate-800 text-slate-400 border-slate-700'
+                    }`}
+                  >
+                    {performanceMode ? 'ENABLED' : 'HIGH GRAPHICS'}
+                  </button>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => { playClickSound(); setIsPaused(false); }}
@@ -1483,7 +1557,7 @@ export default function App() {
                     const currentLives = progress.lives !== undefined ? progress.lives : 5;
                     if (currentLives <= 1 && !showLevelClear && !hasClearedCurrentSession) {
                       setIsPaused(false);
-                      setCurrentView('map');
+                      setCurrentView('home');
                     } else {
                       handleLaunchLevel(selectedLevel!.levelNumber); 
                     }
@@ -1493,10 +1567,10 @@ export default function App() {
                   RESTART LEVEL
                 </button>
                 <button
-                  onClick={() => { playClickSound(); if (!showLevelClear && !hasClearedCurrentSession) { deductLife(); } setIsPaused(false); setCurrentView('map'); stopBgmLoop(); }}
+                  onClick={() => { playClickSound(); if (!showLevelClear && !hasClearedCurrentSession) { deductLife(); } setIsPaused(false); setCurrentView('home'); stopBgmLoop(); }}
                   className="w-full py-3 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-xl font-sans font-bold text-xs"
                 >
-                  QUIT TO WORLD MAP
+                  QUIT TO MAIN MENU
                 </button>
               </div>
             </motion.div>
